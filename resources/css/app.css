@@ -9,3 +9,252 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+@layer base {
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(14, 165, 233, 0.35) rgba(226, 232, 240, 0.8);
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+}
+
+@layer components {
+    .dashboard-card {
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 1.15rem;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(16px);
+    }
+
+    .metric-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 2.35rem;
+        border: 1px solid rgb(226, 232, 240);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.88);
+        padding: 0.48rem 0.75rem;
+        color: rgb(71, 85, 105);
+        font-size: 0.78rem;
+        font-weight: 700;
+        white-space: nowrap;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+    }
+
+    .status-card {
+        display: flex;
+        align-items: center;
+        gap: 0.95rem;
+        min-height: 6.2rem;
+        border: 1px solid rgb(226, 232, 240);
+        border-radius: 1.15rem;
+        background: linear-gradient(180deg, #ffffff, #fbfdff);
+        padding: 1rem;
+        box-shadow: 0 14px 35px rgba(15, 23, 42, 0.05);
+        transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .status-card:hover,
+    .sensor-card:hover,
+    .weather-tile:hover,
+    .monitor-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(14, 165, 233, 0.28);
+        box-shadow: 0 22px 45px rgba(15, 23, 42, 0.08);
+    }
+
+    .status-icon {
+        display: grid;
+        width: 3rem;
+        height: 3rem;
+        place-items: center;
+        border-radius: 1rem;
+    }
+
+    .sensor-card,
+    .weather-tile,
+    .monitor-card {
+        min-height: 11rem;
+        border: 1px solid rgb(226, 232, 240);
+        border-radius: 1.15rem;
+        background: #ffffff;
+        padding: 1rem;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.05);
+        transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .weather-tile {
+        min-height: 8.5rem;
+    }
+
+    .legend-dot {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        border: 1px solid rgb(226, 232, 240);
+        border-radius: 999px;
+        background: #ffffff;
+        padding: 0.42rem 0.68rem;
+        color: rgb(71, 85, 105);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+    }
+
+    .legend-dot::before {
+        content: '';
+        width: 0.58rem;
+        height: 0.58rem;
+        border-radius: 999px;
+        background: currentColor;
+        box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 18%, transparent);
+    }
+
+    .soft-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.38rem;
+        border-radius: 999px;
+        padding: 0.35rem 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .table-head {
+        background: rgb(248, 250, 252);
+        color: rgb(100, 116, 139);
+    }
+
+    .leaflet-container {
+        background: #eaf4f8;
+        color: rgb(30, 41, 59);
+        font-family: inherit;
+    }
+
+    .leaflet-tile-pane {
+        filter: saturate(0.86) contrast(0.98) brightness(1.04);
+    }
+
+    .leaflet-control-attribution {
+        border-radius: 0.75rem 0 0 0;
+        background: rgba(255, 255, 255, 0.86) !important;
+        color: rgb(100, 116, 139) !important;
+        backdrop-filter: blur(12px);
+    }
+
+    .leaflet-control-zoom a {
+        border-color: rgb(226, 232, 240) !important;
+        background: rgba(255, 255, 255, 0.92) !important;
+        color: rgb(15, 23, 42) !important;
+    }
+
+    .flood-marker {
+        position: relative;
+        display: grid;
+        width: 2.55rem;
+        height: 2.55rem;
+        place-items: center;
+        border: 3px solid #ffffff;
+        border-radius: 999px;
+        background: var(--marker-color);
+        box-shadow: 0 0 0 7px color-mix(in srgb, var(--marker-color) 18%, transparent), 0 16px 34px rgba(15, 23, 42, 0.24);
+    }
+
+    .flood-marker::before {
+        content: '';
+        position: absolute;
+        inset: -0.5rem;
+        border-radius: 999px;
+        border: 1px solid color-mix(in srgb, var(--marker-color) 65%, transparent);
+        animation: marker-pulse 1.8s ease-out infinite;
+    }
+
+    .flood-marker span {
+        width: 0.58rem;
+        height: 0.58rem;
+        border-radius: 999px;
+        background: white;
+    }
+
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip {
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        background: rgba(255, 255, 255, 0.9);
+        color: rgb(30, 41, 59);
+        box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
+        backdrop-filter: blur(18px);
+    }
+
+    .leaflet-popup-content {
+        width: min(82vw, 580px) !important;
+        margin: 0;
+    }
+
+    .popup-grid {
+        display: grid;
+        gap: 0.75rem;
+        padding: 0.85rem;
+    }
+
+    .popup-section {
+        border: 1px solid rgb(226, 232, 240);
+        border-radius: 0.9rem;
+        background: rgba(248, 250, 252, 0.8);
+        padding: 0.8rem;
+    }
+
+    .cctv-placeholder {
+        position: relative;
+        min-height: 9rem;
+        overflow: hidden;
+        border-radius: 0.95rem;
+        background:
+            linear-gradient(90deg, rgba(14, 165, 233, 0.16), transparent 36%, rgba(239, 68, 68, 0.14)),
+            repeating-linear-gradient(0deg, rgba(15, 23, 42, 0.06) 0 1px, transparent 1px 8px),
+            #eaf4fb;
+    }
+
+    .cctv-placeholder::after {
+        content: '';
+        position: absolute;
+        inset: 18% 22% 20% 34%;
+        border: 2px solid rgba(239, 68, 68, 0.72);
+        border-radius: 0.35rem;
+        box-shadow: 0 0 18px rgba(239, 68, 68, 0.25);
+    }
+
+    .loading-scan {
+        position: absolute;
+        inset-inline: 0;
+        top: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.95), transparent);
+        animation: scanline 2.4s linear infinite;
+    }
+}
+
+@keyframes marker-pulse {
+    from {
+        opacity: 0.75;
+        transform: scale(0.82);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(1.55);
+    }
+}
+
+@keyframes scanline {
+    0% {
+        transform: translateY(0);
+    }
+
+    100% {
+        transform: translateY(9rem);
+    }
+}
