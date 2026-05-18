@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Api\RealtimeWeatherController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/api/weather/realtime', RealtimeWeatherController::class)->name('api.weather.realtime');
 
 Route::controller(DashboardController::class)->group(function () {
     Route::get('/', 'dashboard')->name('dashboard');

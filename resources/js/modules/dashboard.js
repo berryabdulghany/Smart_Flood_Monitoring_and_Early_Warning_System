@@ -24,6 +24,10 @@ const statusLabelClass = (status) => ({
     danger: 'bg-red-50 text-red-700 ring-red-100',
 }[status] || 'bg-slate-50 text-slate-700 ring-slate-100');
 
+const mapMarkers = new Map();
+
+const weatherLabel = (location, key, fallback = '-') => location.realtimeWeather?.[key] ?? fallback;
+
 const popupTemplate = (location) => `
     <div class="popup-grid">
         <div class="flex items-start justify-between gap-3">
@@ -74,8 +78,14 @@ const popupTemplate = (location) => `
             <div class="popup-section">
                 <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Weather API</p>
                 <div class="mt-3 space-y-2 text-sm">
-                    <div class="flex justify-between"><span class="font-medium text-slate-500">Cuaca saat ini</span><b class="text-slate-950">${location.weather}</b></div>
-                    <div class="flex justify-between"><span class="font-medium text-slate-500">Potensi hujan</span><b class="text-cyan-700">${location.rain_potential}</b></div>
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="font-medium text-slate-500">Cuaca saat ini</span>
+                        <b class="text-right text-slate-950">${weatherLabel(location, 'condition', location.weather)}</b>
+                    </div>
+                    <div class="flex justify-between"><span class="font-medium text-slate-500">Temperatur</span><b class="text-slate-950">${weatherLabel(location, 'temperature', location.temperature)} C</b></div>
+                    <div class="flex justify-between"><span class="font-medium text-slate-500">Humidity</span><b class="text-slate-950">${weatherLabel(location, 'humidity', location.humidity)}%</b></div>
+                    <div class="flex justify-between"><span class="font-medium text-slate-500">Rainfall</span><b class="text-cyan-700">${weatherLabel(location, 'rainfall', location.rainfall)} mm</b></div>
+                    <div class="flex justify-between"><span class="font-medium text-slate-500">Wind speed</span><b class="text-slate-950">${weatherLabel(location, 'wind_speed', location.wind_speed)} km/h</b></div>
                     <div class="flex justify-between"><span class="font-medium text-slate-500">Prediksi banjir</span><b class="text-red-600">${location.flood_prediction}</b></div>
                 </div>
             </div>
@@ -110,12 +120,38 @@ const initMap = () => {
             popupAnchor: [0, -18],
         });
 
-        window.L.marker([location.lat, location.lng], { icon })
+        const marker = window.L.marker([location.lat, location.lng], { icon })
             .addTo(map)
             .bindPopup(popupTemplate(location), {
                 maxWidth: 620,
                 closeButton: true,
             });
+
+        mapMarkers.set(location.id, marker);
+    });
+
+    applyWeatherToMap(window.SFMEWS?.latestWeather);
+};
+
+const applyWeatherToMap = (payload) => {
+    const locations = window.SFMEWS?.locations || [];
+    const points = payload?.points || {};
+
+    locations.forEach((location) => {
+        const weather = points[location.id]?.weather;
+
+        if (!weather) {
+            return;
+        }
+
+        location.realtimeWeather = weather;
+        mapMarkers.get(location.id)?.setPopupContent(popupTemplate(location));
+    });
+};
+
+const initWeatherMapUpdates = () => {
+    window.addEventListener('sfmews:weather-updated', (event) => {
+        applyWeatherToMap(event.detail);
     });
 };
 
@@ -267,6 +303,7 @@ ready(() => {
     initClock();
     initSidebar();
     initHistoryFilters();
+    initWeatherMapUpdates();
 
     waitFor(() => Boolean(window.lucide), () => window.lucide.createIcons());
     waitFor(() => Boolean(window.L && window.SFMEWS), initMap);

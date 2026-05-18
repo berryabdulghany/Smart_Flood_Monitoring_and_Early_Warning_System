@@ -38,32 +38,41 @@
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-lg font-bold text-slate-950">Weather Monitoring</h2>
-                <p class="text-sm font-medium text-slate-500">Dummy API cuaca BMKG Bandung</p>
+                <p class="text-sm font-medium text-slate-500">Realtime OpenWeatherMap Bandung overview</p>
             </div>
             <span class="grid h-10 w-10 place-items-center rounded-xl bg-amber-50 text-amber-500">
                 <i data-lucide="cloud-sun" class="h-5 w-5"></i>
             </span>
         </div>
+        <div class="mt-3 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+            <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Updated</span>
+            <span id="weather-last-updated" class="text-xs font-bold text-cyan-700">Loading...</span>
+        </div>
         <div class="mt-5 grid grid-cols-2 gap-3">
             <div class="weather-tile">
                 <i data-lucide="thermometer" class="h-5 w-5 text-red-500"></i>
                 <p class="mt-3 text-xs font-bold uppercase tracking-wide text-slate-500">Temperatur</p>
-                <p class="text-xl font-bold text-slate-950">25.7 C</p>
+                <p class="text-xl font-bold text-slate-950"><span id="weather-overview-temp">Loading</span> C</p>
             </div>
             <div class="weather-tile">
                 <i data-lucide="droplets" class="h-5 w-5 text-cyan-600"></i>
                 <p class="mt-3 text-xs font-bold uppercase tracking-wide text-slate-500">Humidity</p>
-                <p class="text-xl font-bold text-slate-950">86%</p>
+                <p class="text-xl font-bold text-slate-950"><span id="weather-overview-humidity">Loading</span>%</p>
             </div>
             <div class="weather-tile">
                 <i data-lucide="cloud-rain" class="h-5 w-5 text-blue-600"></i>
                 <p class="mt-3 text-xs font-bold uppercase tracking-wide text-slate-500">Rain intensity</p>
-                <p class="text-xl font-bold text-slate-950">41 mm/h</p>
+                <p class="text-xl font-bold text-slate-950"><span id="weather-overview-rain">Loading</span> mm</p>
             </div>
             <div class="weather-tile">
                 <i data-lucide="wind" class="h-5 w-5 text-emerald-600"></i>
                 <p class="mt-3 text-xs font-bold uppercase tracking-wide text-slate-500">Wind speed</p>
-                <p class="text-xl font-bold text-slate-950">12 km/h</p>
+                <p class="text-xl font-bold text-slate-950"><span id="weather-overview-wind">Loading</span> km/h</p>
+            </div>
+            <div class="weather-tile col-span-2 min-h-28">
+                <i data-lucide="cloud-sun" class="h-5 w-5 text-amber-500"></i>
+                <p class="mt-3 text-xs font-bold uppercase tracking-wide text-slate-500">Weather condition</p>
+                <p id="weather-overview-condition" class="text-xl font-bold text-slate-950">Loading condition...</p>
             </div>
         </div>
     </section>

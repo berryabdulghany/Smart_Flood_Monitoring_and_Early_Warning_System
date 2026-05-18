@@ -101,6 +101,57 @@
 
                 @include('pages.partials.ai-cctv-detection')
 
+                <section class="dashboard-card p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wide text-cyan-600">OpenWeatherMap</p>
+                            <h2 class="text-lg font-bold text-slate-950">Realtime Weather by GIS Point</h2>
+                            <p class="text-sm font-medium text-slate-500">Kondisi cuaca realtime untuk setiap titik monitoring banjir Kota Bandung.</p>
+                        </div>
+                        <span id="weather-api-status" class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
+                            <span id="weather-api-indicator" class="h-2.5 w-2.5 rounded-full bg-slate-400"></span>
+                            <span id="weather-api-label">Loading weather</span>
+                        </span>
+                    </div>
+
+                    <div id="weather-api-error" class="mt-4 hidden rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+                        OpenWeatherMap sedang tidak tersedia. Dashboard memakai fallback sementara.
+                    </div>
+
+                    <div class="mt-5 grid gap-4 md:grid-cols-3">
+                        @foreach ($locations as $location)
+                            <div class="monitor-card" data-weather-point="{{ $location['id'] }}">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="text-xs font-bold uppercase tracking-wide text-cyan-600">{{ $location['district'] }}</p>
+                                        <h3 class="text-lg font-bold text-slate-950">{{ $location['name'] }}</h3>
+                                    </div>
+                                    <img data-weather-icon class="hidden h-12 w-12 rounded-xl bg-slate-50" alt="Weather icon">
+                                </div>
+                                <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                                    <div class="rounded-xl bg-slate-50 p-3">
+                                        <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Temp</p>
+                                        <p class="text-xl font-extrabold text-slate-950"><span data-weather-temp>Loading</span><span class="text-sm text-slate-400"> C</span></p>
+                                    </div>
+                                    <div class="rounded-xl bg-slate-50 p-3">
+                                        <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Humidity</p>
+                                        <p class="text-xl font-extrabold text-slate-950"><span data-weather-humidity>Loading</span><span class="text-sm text-slate-400">%</span></p>
+                                    </div>
+                                    <div class="rounded-xl bg-slate-50 p-3">
+                                        <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Rain</p>
+                                        <p class="text-xl font-extrabold text-slate-950"><span data-weather-rain>Loading</span><span class="text-sm text-slate-400"> mm</span></p>
+                                    </div>
+                                    <div class="rounded-xl bg-slate-50 p-3">
+                                        <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Wind</p>
+                                        <p class="text-xl font-extrabold text-slate-950"><span data-weather-wind>Loading</span><span class="text-sm text-slate-400"> km/h</span></p>
+                                    </div>
+                                </div>
+                                <p data-weather-condition class="mt-3 text-sm font-bold text-slate-600">Loading condition...</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+
                 <section class="dashboard-card overflow-hidden">
                     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
                         <div>
@@ -135,6 +186,7 @@
                 'locations' => $locations,
                 'sensorEndpoint' => 'http://127.0.0.1:9000/sensor/latest',
                 'aiEndpoint' => 'http://127.0.0.1:5000/detect',
+                'weatherEndpoint' => route('api.weather.realtime'),
             ]) !!};
         </script>
     @endpush
