@@ -4,3 +4,4 @@ import './dashboard';
 import './ai-cctv';
 import './weather';
 import './smart-gis-popup';
+import './flood-decision';

@@ -25,6 +25,11 @@ const statusLabelClass = (status) => ({
 }[status] || 'bg-slate-50 text-slate-700 ring-slate-100');
 
 const mapMarkers = new Map();
+const statusColors = {
+    safe: '#22c55e',
+    warning: '#f59e0b',
+    danger: '#ef4444',
+};
 
 const weatherLabel = (location, key, fallback = '-') => location.realtimeWeather?.[key] ?? fallback;
 
@@ -132,6 +137,7 @@ const initMap = () => {
     });
 
     applyWeatherToMap(window.SFMEWS?.latestWeather);
+    updateMapDecisionMarkers(Object.values(window.SFMEWS?.floodDecisions || {}));
 };
 
 const applyWeatherToMap = (payload) => {
@@ -156,6 +162,40 @@ const applyWeatherToMap = (payload) => {
 const initWeatherMapUpdates = () => {
     window.addEventListener('sfmews:weather-updated', (event) => {
         applyWeatherToMap(event.detail);
+    });
+};
+
+const updateMapDecisionMarkers = (decisions = []) => {
+    const locations = window.SFMEWS?.locations || [];
+
+    decisions.forEach((decision) => {
+        const marker = mapMarkers.get(decision.locationId);
+        const color = statusColors[decision.status] || '#64748b';
+        const location = locations.find((item) => item.id === decision.locationId);
+
+        if (location) {
+            location.status = decision.status;
+            location.status_label = decision.label;
+            location.status_color = color;
+        }
+
+        if (!marker || !window.L) {
+            return;
+        }
+
+        marker.setIcon(window.L.divIcon({
+            className: '',
+            html: `<div class="flood-marker" style="--marker-color:${color}"><span></span></div>`,
+            iconSize: [42, 42],
+            iconAnchor: [21, 21],
+            popupAnchor: [0, -18],
+        }));
+    });
+};
+
+const initFloodDecisionMapUpdates = () => {
+    window.addEventListener('sfmews:flood-decision-updated', (event) => {
+        updateMapDecisionMarkers(event.detail?.decisions || []);
     });
 };
 
@@ -308,6 +348,7 @@ ready(() => {
     initSidebar();
     initHistoryFilters();
     initWeatherMapUpdates();
+    initFloodDecisionMapUpdates();
 
     waitFor(() => Boolean(window.lucide), () => window.lucide.createIcons());
     waitFor(() => Boolean(window.L && window.SFMEWS), initMap);

@@ -269,6 +269,18 @@ const setAiResult = ({ status, confidence }) => {
     setText(elements.alertTitle, isFlood ? 'Flood Detected' : 'Safe Condition');
     setText(elements.alertMessage, isFlood ? `YOLO detects flood pattern with ${confidence}% confidence.` : `No flood pattern detected. Confidence ${confidence}%.`);
     setText(elements.lastUpdate, formatTimestamp());
+
+    if (activeLocation?.id) {
+        window.dispatchEvent(new CustomEvent('sfmews:ai-detection-updated', {
+            detail: {
+                locationId: activeLocation.id,
+                status,
+                confidence,
+                timestamp: formatTimestamp(),
+                source: 'smart-gis-popup',
+            },
+        }));
+    }
 };
 
 const captureFrameBlob = () => new Promise((resolve, reject) => {
@@ -371,6 +383,15 @@ const openPopup = (location) => {
     updateWeatherPanel();
     loadLiveStream();
     startAiLoop();
+
+    const floodDecisionCard = document.getElementById('smart-popup-flood-decision');
+    if (floodDecisionCard) {
+        floodDecisionCard.dataset.locationId = location.id;
+    }
+
+    window.dispatchEvent(new CustomEvent('sfmews:smart-popup-opened', {
+        detail: { location },
+    }));
 
     window.lucide?.createIcons();
 };

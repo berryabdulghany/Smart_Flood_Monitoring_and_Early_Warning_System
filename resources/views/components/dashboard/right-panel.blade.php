@@ -41,7 +41,7 @@
         </div>
     </section>
 
-    <!-- <section class="dashboard-card p-4">
+    <section class="dashboard-card p-4">
         <div class="flex items-center justify-between">
             <h2 class="text-sm font-bold uppercase tracking-wide text-slate-900">Realtime Sensor</h2>
             <i data-lucide="line-chart" class="h-4 w-4 text-cyan-600"></i>
@@ -56,5 +56,5 @@
                 <div id="rainfall-chart"></div>
             </div>
         </div>
-    </section> -->
+    </section>
 </aside>

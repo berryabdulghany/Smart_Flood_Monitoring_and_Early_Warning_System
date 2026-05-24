@@ -191,6 +191,15 @@ const updateDetectionResult = ({ status, confidence }) => {
 
     updateAlert(status, confidence);
     addHistoryItem(status, confidence, timestamp);
+
+    window.dispatchEvent(new CustomEvent('sfmews:ai-detection-updated', {
+        detail: {
+            status,
+            confidence,
+            timestamp,
+            source: 'dashboard-cctv',
+        },
+    }));
 };
 
 const captureFrameBlob = () => new Promise((resolve, reject) => {

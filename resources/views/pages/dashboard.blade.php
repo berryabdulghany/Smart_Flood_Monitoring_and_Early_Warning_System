@@ -19,21 +19,21 @@
                         <span class="status-icon bg-emerald-50 text-emerald-600"><i data-lucide="shield-check" class="h-5 w-5"></i></span>
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Area aman</p>
-                            <p class="text-2xl font-bold text-slate-950">1</p>
+                            <p class="text-2xl font-bold text-slate-950" data-flood-count-safe>1</p>
                         </div>
                     </div>
                     <div class="status-card">
                         <span class="status-icon bg-amber-50 text-amber-600"><i data-lucide="triangle-alert" class="h-5 w-5"></i></span>
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Waspada</p>
-                            <p class="text-2xl font-bold text-slate-950">1</p>
+                            <p class="text-2xl font-bold text-slate-950" data-flood-count-warning>1</p>
                         </div>
                     </div>
                     <div class="status-card">
                         <span class="status-icon bg-red-50 text-red-600"><i data-lucide="siren" class="h-5 w-5"></i></span>
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Banjir aktif</p>
-                            <p class="text-2xl font-bold text-slate-950">1</p>
+                            <p class="text-2xl font-bold text-slate-950" data-flood-count-danger>1</p>
                         </div>
                     </div>
                 </div>
@@ -99,6 +99,8 @@
                         </div>
                     </div>
                 </section>
+
+                <x-dashboard.flood-decision-summary :locations="$locations" />
 
                 @include('pages.partials.ai-cctv-detection')
 
