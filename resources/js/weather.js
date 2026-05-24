@@ -20,7 +20,7 @@ const queryWeatherElements = () => {
     };
 };
 
-const hasWeatherUi = () => weatherElements.overviewTemp || weatherElements.pointCards?.length;
+const hasWeatherUi = () => weatherElements.overviewTemp || weatherElements.pointCards?.length || window.SFMEWS?.weatherEndpoint;
 
 const weatherEndpoint = () => window.SFMEWS?.weatherEndpoint || WEATHER_ENDPOINT;
 

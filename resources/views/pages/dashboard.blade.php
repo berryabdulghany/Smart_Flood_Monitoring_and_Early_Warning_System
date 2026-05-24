@@ -1,5 +1,6 @@
 <x-layouts.app title="Smart Flood Monitoring Bandung">
     <x-dashboard.sidebar />
+    <x-dashboard.smart-gis-popup />
 
     <div class="lg:pl-72">
         <x-dashboard.topbar :stats="$stats" :page-title="$pageTitle" :page-subtitle="$pageSubtitle" />

@@ -1,5 +1,6 @@
 <x-layouts.app title="Flood Map GIS - Smart Flood Monitoring Bandung">
     <x-dashboard.sidebar />
+    <x-dashboard.smart-gis-popup />
 
     <div class="lg:pl-72">
         <x-dashboard.topbar :stats="$stats" :page-title="$pageTitle" :page-subtitle="$pageSubtitle" />
@@ -34,7 +35,12 @@
 
     @push('scripts')
         <script>
-            window.SFMEWS = @json(['locations' => $locations]);
+            window.SFMEWS = {!! Illuminate\Support\Js::from([
+                'locations' => $locations,
+                'sensorEndpoint' => 'http://127.0.0.1:9000/sensor/latest',
+                'aiEndpoint' => 'http://127.0.0.1:5000/detect',
+                'weatherEndpoint' => route('api.weather.realtime'),
+            ]) !!};
         </script>
     @endpush
 </x-layouts.app>

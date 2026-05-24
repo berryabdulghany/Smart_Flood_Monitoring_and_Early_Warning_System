@@ -29,6 +29,9 @@
                     <select id="ai-video-source" class="h-9 rounded-lg border border-white/10 bg-white/10 px-3 text-xs font-bold text-white outline-none transition hover:bg-white/15">
                         <option value="/videos/banjir.mp4">Flood simulation</option>
                         <option value="/videos/normal.mp4">Normal condition</option>
+                        <option value="/videos/gedebage-flood-transition.mp4">Gedebage Flood Transition</option>
+                        <option value="/videos/pasirkoja-flood-transition.mp4">Pasirkoja Flood Transition</option>
+                        <option value="/videos/kopo-flood-transition.mp4">Kopo Flood Transition</option>
                     </select>
                 </div>
                 <div class="relative aspect-video bg-slate-950">

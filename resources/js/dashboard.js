@@ -142,8 +142,14 @@ const fetchLatestSensor = async () => {
         }
 
         const payload = await response.json();
+        window.SFMEWS = window.SFMEWS || {};
+        window.SFMEWS.latestSensor = payload;
         updateSensorCards(payload);
         setConnectionStatus(true);
+
+        window.dispatchEvent(new CustomEvent('sfmews:sensor-updated', {
+            detail: payload,
+        }));
     } catch (error) {
         clearLoadingState();
         setConnectionStatus(false);
@@ -161,7 +167,7 @@ const fetchLatestSensor = async () => {
 const initRealtimeSensorMonitoring = () => {
     querySensorElements();
 
-    if (!hasRealtimeSensorCards()) {
+    if (!hasRealtimeSensorCards() && !window.SFMEWS?.sensorEndpoint) {
         return;
     }
 

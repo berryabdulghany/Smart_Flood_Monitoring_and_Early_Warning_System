@@ -1,5 +1,5 @@
-<div class="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-    <section class="dashboard-card p-4">
+<div class="ggrid gap-4 p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:p-8">
+    <!-- <section class="dashboard-card p-4">
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-lg font-bold text-slate-950">IoT Monitoring</h2>
@@ -32,9 +32,9 @@
                 <div id="gauge-humidity" class="mt-2"></div>
             </div>
         </div>
-    </section>
+    </section> -->
 
-    <section class="dashboard-card p-4">
+    <section class="dashboard-card p-4 ">
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-lg font-bold text-slate-950">Weather Monitoring</h2>

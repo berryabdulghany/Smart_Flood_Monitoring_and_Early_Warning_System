@@ -122,9 +122,10 @@ const initMap = () => {
 
         const marker = window.L.marker([location.lat, location.lng], { icon })
             .addTo(map)
-            .bindPopup(popupTemplate(location), {
-                maxWidth: 620,
-                closeButton: true,
+            .on('click', () => {
+                window.dispatchEvent(new CustomEvent('sfmews:open-smart-popup', {
+                    detail: { location },
+                }));
             });
 
         mapMarkers.set(location.id, marker);
@@ -145,8 +146,11 @@ const applyWeatherToMap = (payload) => {
         }
 
         location.realtimeWeather = weather;
-        mapMarkers.get(location.id)?.setPopupContent(popupTemplate(location));
     });
+
+    window.dispatchEvent(new CustomEvent('sfmews:map-weather-applied', {
+        detail: payload,
+    }));
 };
 
 const initWeatherMapUpdates = () => {
