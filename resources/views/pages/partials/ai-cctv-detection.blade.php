@@ -26,12 +26,17 @@
                         <span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
                         <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                     </div>
+                    <select id="ai-monitoring-location" class="h-9 rounded-lg border border-white/10 bg-white/10 px-3 text-xs font-bold text-white outline-none transition hover:bg-white/15">
+                        <option value="Kopo" data-location-id="kopo">Kopo</option>
+                        <option value="Pasir Koja" data-location-id="pasir-koja">Pasir Koja</option>
+                        <option value="Gedebage" data-location-id="gede-bage">Gedebage</option>
+                    </select>
                     <select id="ai-video-source" class="h-9 rounded-lg border border-white/10 bg-white/10 px-3 text-xs font-bold text-white outline-none transition hover:bg-white/15">
-                        <option value="/videos/banjir.mp4">Flood simulation</option>
-                        <option value="/videos/normal.mp4">Normal condition</option>
-                        <option value="/videos/gedebage-flood-transition.mp4">Gedebage Flood Transition</option>
-                        <option value="/videos/pasirkoja-flood-transition.mp4">Pasirkoja Flood Transition</option>
-                        <option value="/videos/kopo-flood-transition.mp4">Kopo Flood Transition</option>
+                        <option value="/videos/banjir.mp4" data-location="Kopo" data-location-id="kopo">Flood simulation</option>
+                        <option value="/videos/normal.mp4" data-location="Gedebage" data-location-id="gede-bage">Normal condition</option>
+                        <option value="/videos/gedebage-flood-transition.mp4" data-location="Gedebage" data-location-id="gede-bage">Gedebage Flood Transition</option>
+                        <option value="/videos/pasirkoja-flood-transition.mp4" data-location="Pasir Koja" data-location-id="pasir-koja">Pasirkoja Flood Transition</option>
+                        <option value="/videos/kopo-flood-transition.mp4" data-location="Kopo" data-location-id="kopo">Kopo Flood Transition</option>
                     </select>
                 </div>
                 <div class="relative aspect-video bg-slate-950">
@@ -43,7 +48,7 @@
                         </div>
                     </div>
                     <div class="absolute left-3 top-3 rounded-full bg-white/88 px-3 py-1.5 text-xs font-bold text-slate-700 shadow">
-                        CCTV-SIM-BDG-01
+                        CCTV-SIM-BDG-01 · <span id="ai-selected-location-label">Kopo</span>
                     </div>
                     <div id="ai-video-badge" class="absolute bottom-3 left-3 rounded-xl bg-slate-950/75 px-3 py-2 text-xs font-bold text-white shadow">
                         Ready for AI detection

@@ -45,6 +45,12 @@ const isReady = () => Boolean(elements.modal && elements.video);
 
 const endpoint = () => window.SFMEWS?.aiEndpoint || 'http://127.0.0.1:5000/detect';
 
+const locationNameForAi = (location = activeLocation) => ({
+    kopo: 'Kopo',
+    'pasir-koja': 'Pasir Koja',
+    'gede-bage': 'Gedebage',
+}[location?.id] || location?.short_name || location?.name || 'Unknown');
+
 const formatNumber = (value, decimals = 1) => {
     const numeric = Number(value);
 
@@ -274,6 +280,7 @@ const setAiResult = ({ status, confidence }) => {
         window.dispatchEvent(new CustomEvent('sfmews:ai-detection-updated', {
             detail: {
                 locationId: activeLocation.id,
+                location: locationNameForAi(activeLocation),
                 status,
                 confidence,
                 timestamp: formatTimestamp(),
@@ -321,8 +328,11 @@ const detectFrame = async () => {
     try {
         const blob = await captureFrameBlob();
         const formData = new FormData();
+        const locationName = locationNameForAi();
         formData.append('image', blob, `${activeLocation.id}-frame.jpg`);
         formData.append('file', blob, `${activeLocation.id}-frame.jpg`);
+        formData.append('location', locationName);
+        formData.append('location_id', activeLocation.id);
 
         const response = await fetch(endpoint(), {
             method: 'POST',

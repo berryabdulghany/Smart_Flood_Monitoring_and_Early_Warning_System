@@ -12,6 +12,8 @@ const queryAiElements = () => {
     aiElements = {
         video: document.getElementById('ai-cctv-video'),
         source: document.getElementById('ai-video-source'),
+        location: document.getElementById('ai-monitoring-location'),
+        locationLabel: document.getElementById('ai-selected-location-label'),
         canvas: document.getElementById('ai-frame-canvas'),
         startButton: document.getElementById('ai-start-detection'),
         stopButton: document.getElementById('ai-stop-detection'),
@@ -41,6 +43,35 @@ const hasAiDashboard = () => Boolean(
 );
 
 const endpoint = () => window.SFMEWS?.aiEndpoint || AI_ENDPOINT;
+
+const getSelectedLocation = () => {
+    const selected = aiElements.location?.selectedOptions?.[0];
+
+    return {
+        id: selected?.dataset.locationId || 'kopo',
+        name: selected?.value || selected?.textContent?.trim() || 'Kopo',
+    };
+};
+
+const syncLocationFromVideoSource = () => {
+    const selectedSource = aiElements.source?.selectedOptions?.[0];
+    const locationId = selectedSource?.dataset.locationId;
+    const locationName = selectedSource?.dataset.location;
+
+    if (aiElements.location && locationName) {
+        aiElements.location.value = locationName;
+    }
+
+    const selectedLocation = getSelectedLocation();
+
+    if (aiElements.locationLabel) {
+        aiElements.locationLabel.textContent = selectedLocation.name;
+    }
+
+    if (aiElements.videoBadge && locationId) {
+        aiElements.videoBadge.textContent = `Video source loaded for ${selectedLocation.name}`;
+    }
+};
 
 const formatAiTimestamp = (date = new Date()) => new Intl.DateTimeFormat('id-ID', {
     day: '2-digit',
@@ -134,7 +165,7 @@ const updateAlert = (status, confidence) => {
     }
 };
 
-const addHistoryItem = (status, confidence, timestamp) => {
+const addHistoryItem = (status, confidence, timestamp, location = getSelectedLocation()) => {
     if (!aiElements.history) {
         return;
     }
@@ -150,7 +181,7 @@ const addHistoryItem = (status, confidence, timestamp) => {
     item.innerHTML = `
         <div>
             <p class="text-sm font-bold ${isFlood ? 'text-red-600' : 'text-emerald-600'}">${status}</p>
-            <p class="text-xs font-medium text-slate-500">${timestamp}</p>
+            <p class="text-xs font-medium text-slate-500">${location.name} - ${timestamp}</p>
         </div>
         <span class="text-sm font-extrabold text-slate-900">${confidence}%</span>
     `;
@@ -162,7 +193,7 @@ const addHistoryItem = (status, confidence, timestamp) => {
         .forEach((child) => child.remove());
 };
 
-const updateDetectionResult = ({ status, confidence }) => {
+const updateDetectionResult = ({ status, confidence }, location = getSelectedLocation()) => {
     const isFlood = status === 'BANJIR';
     const timestamp = formatAiTimestamp();
 
@@ -190,10 +221,12 @@ const updateDetectionResult = ({ status, confidence }) => {
     }
 
     updateAlert(status, confidence);
-    addHistoryItem(status, confidence, timestamp);
+    addHistoryItem(status, confidence, timestamp, location);
 
     window.dispatchEvent(new CustomEvent('sfmews:ai-detection-updated', {
         detail: {
+            locationId: location.id,
+            location: location.name,
             status,
             confidence,
             timestamp,
@@ -240,8 +273,11 @@ const sendFrameForDetection = async () => {
     try {
         const blob = await captureFrameBlob();
         const formData = new FormData();
+        const location = getSelectedLocation();
         formData.append('image', blob, 'cctv-frame.jpg');
         formData.append('file', blob, 'cctv-frame.jpg');
+        formData.append('location', location.name);
+        formData.append('location_id', location.id);
 
         const response = await fetch(endpoint(), {
             method: 'POST',
@@ -255,7 +291,7 @@ const sendFrameForDetection = async () => {
         }
 
         const payload = await response.json();
-        updateDetectionResult(normalizeStatus(payload));
+        updateDetectionResult(normalizeStatus(payload), location);
         setEngineConnection(true);
     } catch (error) {
         setEngineConnection(false);
@@ -312,9 +348,10 @@ const changeVideoSource = () => {
 
     aiElements.video.src = aiElements.source.value;
     aiElements.video.load();
+    syncLocationFromVideoSource();
 
     if (aiElements.videoBadge) {
-        aiElements.videoBadge.textContent = 'Video source loaded';
+        aiElements.videoBadge.textContent = `Video source loaded for ${getSelectedLocation().name}`;
     }
 };
 
@@ -328,11 +365,17 @@ const initAiCctvDetection = () => {
     aiElements.startButton.addEventListener('click', startDetection);
     aiElements.stopButton.addEventListener('click', stopDetection);
     aiElements.source?.addEventListener('change', changeVideoSource);
+    aiElements.location?.addEventListener('change', () => {
+        if (aiElements.locationLabel) {
+            aiElements.locationLabel.textContent = getSelectedLocation().name;
+        }
+    });
     aiElements.video?.addEventListener('error', () => {
         if (aiElements.videoBadge) {
             aiElements.videoBadge.textContent = 'Video placeholder not found';
         }
     });
+    syncLocationFromVideoSource();
     setButtons();
 };
 
