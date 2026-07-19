@@ -1,0 +1,200 @@
+# ================================================================
+# SMART FLOOD MONITORING SYSTEM — Docker Compose Production
+# ================================================================
+
+services:
+
+  # ==============================================================
+  # MONGODB — Database Utama
+  # ==============================================================
+  mongodb:
+    image: mongo:7.0
+    container_name: smart_flood_mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./docker/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    ports:
+      - "27017:27017"
+    networks:
+      - smart_flood_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ==============================================================
+  # MOSQUITTO — MQTT Broker
+  # ==============================================================
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: smart_flood_mosquitto
+    restart: unless-stopped
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./docker/mosquitto/passwd:/mosquitto/config/passwd
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    ports:
+      - "1883:1883"   # MQTT TCP (untuk IoT devices)
+      - "9001:9001"   # MQTT WebSocket
+    networks:
+      - smart_flood_network
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_pub -h localhost -p 1883 -u ${MQTT_USERNAME} -P ${MQTT_PASSWORD} -t 'health/check' -m 'ping' && echo ok"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ==============================================================
+  # FASTAPI BACKEND — REST API + MQTT Consumer
+  # ==============================================================
+  fastapi-backend:
+    build:
+      context: ./backend-fastapi
+      dockerfile: Dockerfile
+    container_name: smart_flood_fastapi
+    restart: unless-stopped
+    environment:
+      MONGO_URL: ${MONGO_URL}
+      MQTT_BROKER: ${MQTT_BROKER}
+      MQTT_PORT: ${MQTT_PORT}
+      MQTT_TOPIC: ${MQTT_TOPIC}
+      MQTT_USERNAME: ${MQTT_USERNAME}
+      MQTT_PASSWORD: ${MQTT_PASSWORD}
+    ports:
+      - "${FASTAPI_PORT}:8000"
+    networks:
+      - smart_flood_network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ==============================================================
+  # AI ENGINE — Flask + YOLO Detection
+  # ==============================================================
+  ai-engine:
+    build:
+      context: ./ai-engine
+      dockerfile: Dockerfile
+    container_name: smart_flood_ai
+    restart: unless-stopped
+    environment:
+      MONGO_URL: ${MONGO_URL}
+    volumes:
+      - ai_uploads:/app/uploads
+    ports:
+      - "${AI_ENGINE_PORT}:5000"
+    networks:
+      - smart_flood_network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/status"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ==============================================================
+  # LARAVEL — Frontend Web App (PHP-FPM + Nginx)
+  # ==============================================================
+  laravel:
+    build:
+      context: .
+      dockerfile: docker/laravel/Dockerfile
+    container_name: smart_flood_laravel
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${APP_NAME}
+      APP_ENV: ${APP_ENV}
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_URL: ${APP_URL}
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY}
+      FASTAPI_URL: ${FASTAPI_URL}
+      AI_ENGINE_URL: ${AI_ENGINE_URL}
+      MONGO_URL: ${LARAVEL_MONGO_URL}
+      # Session & Cache tetap pakai file (tidak butuh Redis)
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      LOG_CHANNEL: stderr
+    volumes:
+      - laravel_storage:/var/www/html/storage
+      - laravel_public:/var/www/html/public_shared
+    networks:
+      - smart_flood_network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      fastapi-backend:
+        condition: service_started
+      ai-engine:
+        condition: service_started
+
+  # ==============================================================
+  # NGINX — Reverse Proxy untuk Laravel
+  # ==============================================================
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: smart_flood_nginx
+    restart: unless-stopped
+    volumes:
+      - ./docker/laravel/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - laravel_storage:/var/www/html/storage:ro
+      - laravel_public:/var/www/html/public:ro
+    ports:
+      - "80:80"
+    networks:
+      - smart_flood_network
+    depends_on:
+      - laravel
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+# ================================================================
+# VOLUMES
+# ================================================================
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  mosquitto_data:
+    driver: local
+  mosquitto_log:
+    driver: local
+  ai_uploads:
+    driver: local
+  laravel_storage:
+    driver: local
+  laravel_public:
+    driver: local
+
+# ================================================================
+# NETWORKS
+# ================================================================
+networks:
+  smart_flood_network:
+    driver: bridge
+    name: smart_flood_network
