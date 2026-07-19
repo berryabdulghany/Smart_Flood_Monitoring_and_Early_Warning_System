@@ -49,8 +49,8 @@ class DashboardController extends Controller
     public function history(): View
     {
         return view('pages.monitoring.history', $this->dashboardData([
-            'pageTitle' => 'Detection History',
-            'pageSubtitle' => 'Searchable AI flood detection event log across monitoring points.',
+            'pageTitle' => 'Flood Event History',
+            'pageSubtitle' => 'Log keputusan banjir dari 3 indikator: level air, curah hujan, dan AI.',
         ]));
     }
 
@@ -149,7 +149,7 @@ class DashboardController extends Controller
             'locations' => $locations,
             'stats' => [
                 'active_cctv' => 3,
-                'active_sensors' => 9,
+                'active_sensors' => 1,
                 'ai_status' => 'YOLOv8 Online',
                 'system_status' => 'Online',
             ],

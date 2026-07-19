@@ -1,19 +1,31 @@
-<header class="sticky top-0 z-20 border-b border-slate-200/80 bg-white/[0.82] backdrop-blur-xl">
-    <div class="flex min-h-20 flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6 xl:px-8">
-        <div class="flex min-w-0 items-center gap-3">
-            <button id="mobile-sidebar-toggle" class="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-cyan-200 hover:text-cyan-600 lg:hidden">
-                <i data-lucide="menu" class="h-5 w-5"></i>
-            </button>
-            <div class="hidden h-11 w-11 place-items-center rounded-xl bg-cyan-500 text-white shadow-lg shadow-cyan-100 sm:grid lg:hidden">
-                <i data-lucide="waves" class="h-6 w-6"></i>
-            </div>
-            <div class="min-w-0">
-                <p class="truncate text-xs font-bold uppercase tracking-wide text-cyan-600">{{ $pageSubtitle ?? 'Smart Flood Monitoring and Early Warning System' }}</p>
-                <h1 class="truncate text-lg font-bold text-slate-950 sm:text-xl">{{ $pageTitle ?? 'AI + IoT + GIS Command Dashboard' }}</h1>
-            </div>
+<header class="sticky top-0 z-20 w-full border-b border-slate-200/70 bg-white/95 shadow-sm shadow-slate-200/60 backdrop-blur-xl">
+
+    {{-- Main row: toggle + brand + title + pills (md+) --}}
+    <div class="flex h-16 items-center gap-3 px-4 sm:px-6 xl:px-8">
+
+        {{-- Hamburger (mobile/tablet) --}}
+        <button id="mobile-sidebar-toggle"
+                class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-cyan-300 hover:text-cyan-600 lg:hidden">
+            <i data-lucide="menu" class="h-4 w-4"></i>
+        </button>
+
+        {{-- Brand icon (tablet only) --}}
+        <div class="hidden h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-md shadow-cyan-200/70 sm:grid lg:hidden">
+            <i data-lucide="waves" class="h-5 w-5"></i>
         </div>
 
-        <div class="flex flex-1 flex-wrap items-center justify-end gap-2">
+        {{-- Page title --}}
+        <div class="min-w-0 flex-1">
+            <p class="truncate text-[10px] font-extrabold uppercase tracking-widest text-cyan-600 sm:text-[11px]">
+                {{ $pageSubtitle ?? 'Smart Flood Monitoring and Early Warning System' }}
+            </p>
+            <h1 class="truncate text-sm font-bold text-slate-900 sm:text-base lg:text-lg">
+                {{ $pageTitle ?? 'AI + IoT + GIS Command Dashboard' }}
+            </h1>
+        </div>
+
+        {{-- Status pills — hidden on mobile, visible on md+ --}}
+        <div class="hidden shrink-0 items-center gap-1.5 md:flex">
             <div class="metric-pill text-emerald-700">
                 <span class="relative flex h-2.5 w-2.5">
                     <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
@@ -21,10 +33,31 @@
                 </span>
                 {{ $stats['system_status'] }}
             </div>
-            <div class="metric-pill"><i data-lucide="video" class="h-4 w-4 text-cyan-600"></i>{{ $stats['active_cctv'] }} CCTV</div>
-            <div class="metric-pill"><i data-lucide="radio-tower" class="h-4 w-4 text-blue-600"></i>{{ $stats['active_sensors'] }} sensor</div>
-            <div class="metric-pill"><i data-lucide="brain-circuit" class="h-4 w-4 text-red-500"></i>{{ $stats['ai_status'] }}</div>
-            <div class="metric-pill min-w-40 justify-center text-slate-700" id="realtime-clock">Memuat waktu...</div>
+            <div class="metric-pill"><i data-lucide="video" class="h-3.5 w-3.5 text-cyan-600"></i>{{ $stats['active_cctv'] }} CCTV</div>
+            <div class="metric-pill"><i data-lucide="radio-tower" class="h-3.5 w-3.5 text-blue-600"></i>{{ $stats['active_sensors'] }} Sensor</div>
+            <div class="metric-pill"><i data-lucide="brain-circuit" class="h-3.5 w-3.5 text-red-500"></i>{{ $stats['ai_status'] }}</div>
+            <div class="metric-pill min-w-36 justify-center font-mono text-slate-700" id="realtime-clock">--:--:--</div>
+        </div>
+    </div>
+
+    {{-- Mobile status bar — horizontally scrollable, no scrollbar --}}
+    <div class="flex items-center gap-2 overflow-x-auto border-t border-slate-100/80 bg-slate-50/60 px-4 py-2 md:hidden"
+         style="scrollbar-width:none;-ms-overflow-style:none;">
+        <div class="metric-pill shrink-0 text-emerald-700" style="min-height:1.9rem;padding:.3rem .6rem;font-size:.7rem;">
+            <span class="relative flex h-2 w-2">
+                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+            </span>
+            {{ $stats['system_status'] }}
+        </div>
+        <div class="metric-pill shrink-0" style="min-height:1.9rem;padding:.3rem .6rem;font-size:.7rem;">
+            <i data-lucide="video" class="h-3 w-3 text-cyan-600"></i>{{ $stats['active_cctv'] }} CCTV
+        </div>
+        <div class="metric-pill shrink-0" style="min-height:1.9rem;padding:.3rem .6rem;font-size:.7rem;">
+            <i data-lucide="radio-tower" class="h-3 w-3 text-blue-600"></i>{{ $stats['active_sensors'] }} Sensor
+        </div>
+        <div class="metric-pill shrink-0" style="min-height:1.9rem;padding:.3rem .6rem;font-size:.7rem;">
+            <i data-lucide="brain-circuit" class="h-3 w-3 text-red-500"></i>{{ $stats['ai_status'] }}
         </div>
     </div>
 </header>

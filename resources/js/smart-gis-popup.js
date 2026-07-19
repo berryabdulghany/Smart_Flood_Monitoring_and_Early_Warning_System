@@ -36,6 +36,8 @@ const queryElements = () => {
         weatherIcon: document.getElementById('smart-popup-weather-icon'),
         weatherRain: document.getElementById('smart-popup-weather-rain'),
         weatherWind: document.getElementById('smart-popup-weather-wind'),
+        weatherTemp: document.getElementById('smart-popup-weather-temp'),
+        weatherHumidity: document.getElementById('smart-popup-weather-humidity'),
         lastUpdate: document.getElementById('smart-popup-last-update'),
         cctvSource: document.getElementById('smart-popup-cctv-source'),
     };
@@ -224,6 +226,8 @@ const updateWeatherPanel = () => {
     setText(elements.weatherCondition, weather?.condition || activeLocation?.weather || 'Weather loading...');
     setText(elements.weatherRain, formatNumber(weather?.rainfall ?? activeLocation?.rainfall));
     setText(elements.weatherWind, formatNumber(weather?.wind_speed ?? activeLocation?.wind_speed));
+    setText(elements.weatherTemp, formatNumber(weather?.temperature ?? activeLocation?.temperature));
+    setText(elements.weatherHumidity, formatNumber(weather?.humidity ?? activeLocation?.humidity, 0));
 
     if (elements.weatherIcon && weather?.icon_url) {
         elements.weatherIcon.src = weather.icon_url;

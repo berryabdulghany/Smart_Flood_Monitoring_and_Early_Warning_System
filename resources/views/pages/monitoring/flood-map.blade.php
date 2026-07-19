@@ -37,8 +37,8 @@
         <script>
             window.SFMEWS = {!! Illuminate\Support\Js::from([
                 'locations' => $locations,
-                'sensorEndpoint' => 'http://127.0.0.1:9000/sensor/latest',
-                'aiEndpoint' => 'http://127.0.0.1:5000/detect',
+                'sensorEndpoint' => 'http://' . request()->getHost() . ':8000/sensor/latest',
+                'aiEndpoint' => 'http://' . request()->getHost() . ':5000/detect',
                 'weatherEndpoint' => route('api.weather.realtime'),
             ]) !!};
         </script>

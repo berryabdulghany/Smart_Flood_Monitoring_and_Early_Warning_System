@@ -1,4 +1,4 @@
-const SENSOR_ENDPOINT = 'http://127.0.0.1:9000/sensor/latest';
+const SENSOR_ENDPOINT = 'http://127.0.0.1:8000/sensor/latest';
 const POLLING_INTERVAL_MS = 5000;
 const REQUEST_TIMEOUT_MS = 4500;
 

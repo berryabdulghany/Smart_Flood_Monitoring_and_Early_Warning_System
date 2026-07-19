@@ -4,8 +4,7 @@
         ['label' => 'Flood Map GIS', 'icon' => 'map', 'route' => 'flood-map'],
         ['label' => 'CCTV Monitoring', 'icon' => 'video', 'route' => 'cctv'],
         ['label' => 'IoT Monitoring', 'icon' => 'activity', 'route' => 'iot'],
-        ['label' => 'Weather Monitoring', 'icon' => 'cloud-rain', 'route' => 'weather'],
-        ['label' => 'Detection History', 'icon' => 'history', 'route' => 'history'],
+        ['label' => 'Flood Event History', 'icon' => 'history', 'route' => 'history'],
         ['label' => 'Settings', 'icon' => 'settings', 'route' => 'settings'],
     ];
 @endphp
@@ -34,15 +33,5 @@
         @endforeach
     </nav>
 
-    <div class="absolute bottom-5 left-4 right-4 rounded-2xl border border-red-100 bg-gradient-to-br from-red-50 to-white p-4 shadow-sm">
-        <div class="flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wide text-red-500">Early Warning</span>
-            <span class="relative flex h-2.5 w-2.5">
-                <span class="absolute h-full w-full animate-ping rounded-full bg-red-400 opacity-70"></span>
-                <span class="relative h-2.5 w-2.5 rounded-full bg-red-500"></span>
-            </span>
-        </div>
-        <p class="mt-2 text-sm font-bold text-slate-900">AI surveillance aktif</p>
-        <p class="mt-1 text-xs leading-5 text-slate-500">YOLOv8 memantau genangan pada 3 titik prioritas Kota Bandung.</p>
-    </div>
+
 </aside>

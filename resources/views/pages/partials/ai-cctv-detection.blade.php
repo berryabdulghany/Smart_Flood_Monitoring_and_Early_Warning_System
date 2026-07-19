@@ -17,8 +17,8 @@
         </div>
     </div>
 
-    <div class="grid gap-4 p-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-        <div class="space-y-4">
+    <div class="grid gap-3 p-4 ai-cctv-grid xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+        <div class="space-y-3">
             <div class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-slate-900 px-4 py-3">
                     <div class="flex items-center gap-2">
@@ -57,18 +57,18 @@
             </div>
 
             <div class="flex flex-wrap gap-3">
-                <button id="ai-start-detection" class="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-100 transition hover:bg-cyan-700">
+                <button id="ai-start-detection" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-100 transition hover:bg-cyan-700">
                     <i data-lucide="play" class="h-4 w-4"></i>
                     Start Detection
                 </button>
-                <button id="ai-stop-detection" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm transition hover:border-red-100 hover:bg-red-50 hover:text-red-600" disabled>
+                <button id="ai-stop-detection" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm transition hover:border-red-100 hover:bg-red-50 hover:text-red-600" disabled>
                     <i data-lucide="square" class="h-4 w-4"></i>
                     Stop Detection
                 </button>
             </div>
         </div>
 
-        <div class="space-y-4">
+        <div class="space-y-3">
             <div id="ai-alert-card" class="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition duration-300">
                 <div class="flex items-start gap-3">
                     <span id="ai-alert-icon" class="grid h-11 w-11 place-items-center rounded-xl bg-slate-100 text-slate-500">

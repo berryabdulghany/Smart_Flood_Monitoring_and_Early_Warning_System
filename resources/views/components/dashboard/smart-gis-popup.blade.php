@@ -82,36 +82,6 @@
 
                 <div class="grid gap-3">
                     <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900">AI CCTV Detection</h3>
-                            <span id="smart-popup-ai-status-pill" class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">Standby</span>
-                        </div>
-                        <div class="mt-4 grid grid-cols-2 gap-3">
-                            <div class="rounded-xl bg-slate-50 p-3">
-                                <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Label</p>
-                                <p id="smart-popup-ai-label" class="mt-1 text-xl font-extrabold text-slate-950">Waiting</p>
-                            </div>
-                            <div class="rounded-xl bg-slate-50 p-3">
-                                <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Confidence</p>
-                                <p class="mt-1 text-xl font-extrabold text-slate-950"><span id="smart-popup-ai-confidence">0</span>%</p>
-                            </div>
-                        </div>
-                        <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-                            <div id="smart-popup-ai-confidence-bar" class="h-full w-0 rounded-full bg-cyan-500 transition-all duration-500"></div>
-                        </div>
-                    </section>
-
-                    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900">IoT Sensor Monitoring</h3>
-                        <div class="mt-4 grid grid-cols-2 gap-3">
-                            <div class="rounded-xl bg-cyan-50 p-3"><p class="text-xs font-bold text-cyan-700">Water Level</p><p class="text-xl font-extrabold text-slate-950"><span id="smart-popup-water">-</span> cm</p></div>
-                            <div class="rounded-xl bg-blue-50 p-3"><p class="text-xs font-bold text-blue-700">Rainfall</p><p class="text-xl font-extrabold text-slate-950"><span id="smart-popup-rain">-</span> mm</p></div>
-                            <div class="rounded-xl bg-red-50 p-3"><p class="text-xs font-bold text-red-700">Temperature</p><p class="text-xl font-extrabold text-slate-950"><span id="smart-popup-temp">-</span> C</p></div>
-                            <div class="rounded-xl bg-emerald-50 p-3"><p class="text-xs font-bold text-emerald-700">Humidity</p><p class="text-xl font-extrabold text-slate-950"><span id="smart-popup-humidity">-</span>%</p></div>
-                        </div>
-                    </section>
-
-                    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                         <div class="flex items-start justify-between gap-3">
                             <div>
                                 <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900">Weather Monitoring</h3>
@@ -120,6 +90,8 @@
                             <img id="smart-popup-weather-icon" class="hidden h-14 w-14 rounded-2xl bg-slate-50" alt="Weather icon">
                         </div>
                         <div class="mt-4 grid grid-cols-2 gap-3">
+                            <div class="rounded-xl bg-slate-50 p-3"><p class="text-xs font-bold text-slate-500">Temperature</p><p class="text-xl font-extrabold text-slate-950"><span id="smart-popup-weather-temp">-</span> °C</p></div>
+                            <div class="rounded-xl bg-slate-50 p-3"><p class="text-xs font-bold text-slate-500">Humidity</p><p class="text-xl font-extrabold text-slate-950"><span id="smart-popup-weather-humidity">-</span> %</p></div>
                             <div class="rounded-xl bg-slate-50 p-3"><p class="text-xs font-bold text-slate-500">Rain Intensity</p><p class="text-xl font-extrabold text-slate-950"><span id="smart-popup-weather-rain">-</span> mm</p></div>
                             <div class="rounded-xl bg-slate-50 p-3"><p class="text-xs font-bold text-slate-500">Wind Speed</p><p class="text-xl font-extrabold text-slate-950"><span id="smart-popup-weather-wind">-</span> km/h</p></div>
                         </div>

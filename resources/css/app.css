@@ -289,6 +289,97 @@
         animation: smart-popup-scan 1.45s ease-in-out infinite;
         box-shadow: 0 0 28px rgba(34, 211, 238, 0.85);
     }
+
+    /* ===== RESPONSIVE MOBILE UTILITIES ===== */
+
+    /* Topbar: metric pills wrap & shrink on very small screens */
+    @media (max-width: 479px) {
+        .metric-pill {
+            font-size: 0.7rem;
+            padding: 0.38rem 0.55rem;
+            gap: 0.35rem;
+        }
+    }
+
+    /* Right panel: pada mobile jadi section normal (bukan sticky aside) */
+    .right-panel-mobile-section {
+        width: 100%;
+    }
+
+    /* AI CCTV grid: force single col pada mobile */
+    @media (max-width: 767px) {
+        .ai-cctv-grid {
+            grid-template-columns: 1fr !important;
+        }
+        .status-card {
+            min-height: 5rem;
+        }
+        .sensor-card,
+        .weather-tile,
+        .monitor-card,
+        .realtime-sensor-card {
+            min-height: auto;
+        }
+    }
+
+    /* Map height on mobile */
+    @media (max-width: 639px) {
+        .map-container-responsive {
+            height: 320px !important;
+            min-height: 280px !important;
+        }
+    }
+
+    /* Cegah geser horizontal (kiri-kanan) di mobile & tablet.
+       Dibatasi < xl (1280px) supaya tidak mengganggu sticky panel desktop. */
+    @media (max-width: 1279px) {
+        html,
+        body {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+    }
+
+    /* Right panel accordion toggle button */
+    .right-panel-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgb(226, 232, 240);
+        background: rgb(248, 250, 252);
+        border-radius: 1.15rem 1.15rem 0 0;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: rgb(30, 41, 59);
+        cursor: pointer;
+        transition: background 150ms ease;
+    }
+
+    .right-panel-toggle:hover {
+        background: rgb(241, 245, 249);
+    }
+
+    .right-panel-toggle-icon {
+        transition: transform 300ms ease;
+    }
+
+    .right-panel-toggle-icon.open {
+        transform: rotate(180deg);
+    }
+
+    .right-panel-collapsible {
+        overflow: hidden;
+        transition: max-height 350ms ease, opacity 300ms ease;
+        max-height: 9999px;
+        opacity: 1;
+    }
+
+    .right-panel-collapsible.collapsed {
+        max-height: 0;
+        opacity: 0;
+    }
 }
 
 @keyframes marker-pulse {

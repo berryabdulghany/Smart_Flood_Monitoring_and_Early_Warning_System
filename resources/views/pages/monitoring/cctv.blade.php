@@ -5,7 +5,7 @@
         <x-dashboard.topbar :stats="$stats" :page-title="$pageTitle" :page-subtitle="$pageSubtitle" />
 
         <main class="p-4 sm:p-6 xl:p-8">
-            <div class="grid gap-4 lg:grid-cols-3">
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($locations as $location)
                     @php
                         $badge = $location['status'] === 'danger'
