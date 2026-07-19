@@ -31,17 +31,6 @@
             </div>
 
             <aside class="min-h-0 overflow-y-auto bg-slate-50 p-4">
-                <div class="mb-4 flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                    <div>
-                        <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Connection</p>
-                        <p id="smart-popup-connection" class="text-sm font-extrabold text-emerald-600">Realtime connected</p>
-                    </div>
-                    <span class="relative flex h-3 w-3">
-                        <span class="absolute h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative h-3 w-3 rounded-full bg-emerald-500"></span>
-                    </span>
-                </div>
-
                 <div id="smart-popup-flood-decision" class="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition" data-location-id="">
                     <div class="flex items-start justify-between gap-3">
                         <div>
@@ -98,11 +87,10 @@
                     </section>
 
                     <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900">Monitoring Status</h3>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900">Info Stream</h3>
                         <div class="mt-3 space-y-2 text-sm">
                             <div class="flex justify-between gap-3"><span class="font-semibold text-slate-500">Last update</span><b id="smart-popup-last-update" class="text-right text-slate-950">Waiting...</b></div>
                             <div class="flex justify-between gap-3"><span class="font-semibold text-slate-500">CCTV source</span><b id="smart-popup-cctv-source" class="text-right text-slate-950">-</b></div>
-                            <div class="flex justify-between gap-3"><span class="font-semibold text-slate-500">Realtime indicator</span><b class="text-emerald-600">Active</b></div>
                         </div>
                     </section>
                 </div>

@@ -335,9 +335,9 @@ docker cp "file.php" smart_flood_laravel:/var/www/html/... # Copy file ke contai
 
 ## 📝 To-Do / Yang Belum Dikerjakan
 
-- [ ] Perbaikan visual popup GIS (masih dalam review user)
+- [~] Perbaikan visual popup GIS — judul duplikat "Monitoring Status" (kedua jadi "Info Stream") & indikator koneksi redundan (card Connection + baris Realtime indicator dihapus, sisakan pill header LIVE/OFFLINE) SUDAH. Sisanya sesuai review lanjutan user.
 - [ ] Halaman Settings (belum disentuh)
-- [ ] Push notification / sound alert banjir
+- [~] Push notification / sound alert banjir — **Lapis A SELESAI** (geofencing foreground): `resources/js/geofence-alert.js` (di-import di `app.js`). Fitur: tombol "Aktifkan Peringatan Lokasi" (floating), Geolocation `watchPosition`, geofence radius 2 km (Haversine) ke titik SFMEWS.locations, kalau user dalam radius titik Waspada/Banjir → alarm sirene (Web Audio) + Notification + banner merah. Ada tombol "Uji alarm (simulasi)". Butuh HTTPS/localhost. **Lapis B (Web Push saat web tertutup) belum** — butuh VAPID + HTTPS VPS. Konteks: revisi penguji sidang proposal (context-aware/LBS/geofencing).
 - [x] Detection History LIVE — fetch dari `/detection/history`, search + filter + Export CSV aktif
 - [ ] Export history ke PDF/Excel (CSV sudah, PDF/Excel opsional)
 - [ ] Dark mode (opsional)
@@ -349,7 +349,7 @@ docker cp "file.php" smart_flood_laravel:/var/www/html/... # Copy file ke contai
   - **Urutan mobile: GIS-first** — 4 status card + Map GIS di ATAS (inti web = pemantauan GIS), lalu AI CCTV + history, baru panel realtime (IoT/Flood/Weather) di bawah. Ini urutan DOM natural (section sebelum aside), tanpa `order` class. Desktop tetap 2 kolom.
   - **Anti geser horizontal di HP**: `@media (max-width:1279px){ html,body{ overflow-x:hidden } }` di `app.css` (dibatasi <xl agar tidak ganggu sticky desktop).
   - **FIX kepotong kanan di HP sempit (iPhone 14 Pro Max dll)**: `<main>` sebelumnya `grid` TANPA definisi kolom di mobile → kolom `auto` melebar ikut konten terlebar → seluruh halaman > lebar layar. Ditambah `grid-cols-1` (= `minmax(0,1fr)`) sebagai base → konten clamp ke lebar layar. Ini akar-fix; `overflow-x:hidden` jadi jaring pengaman.
-  - **Detection History dashboard**: kini LIVE (fetch `/flood/history?limit=6`, 6 event terbaru) + tombol "Lihat Semua" ke halaman penuh, dan dipindah ke **paling bawah** `<main>` (`xl:col-span-2`, full width di desktop). Bukan lagi dummy `$history`.
+  - **Detection History dashboard**: kini LIVE (fetch `/flood/history?limit=6`, 6 event terbaru) + tombol "Lihat Semua" ke halaman penuh. Kolom: Waktu, Lokasi, Status (kolom AI dihapus atas permintaan). Posisi: child ke-3 `<main>` TANPA `col-span` → desktop jatuh ke kolom KIRI bawah (tidak menimpa panel kanan), mobile paling bawah. Bukan lagi dummy `$history`.
   - **Panel kanan (right-panel) TIDAK pakai dropdown lagi** (user tidak suka accordion). Sekarang: kartu ringkas selalu tampil, judul section tampil di mobile, Flood Decision punya **hero count besar khusus mobile** (`xl:hidden`) + chip kecil khusus desktop (`hidden xl:flex`) — keduanya bawa `data-flood-count-*` (JS `querySelectorAll` update semua). `toggleRightPanel()` sudah dihapus. Semua id/data-attribute dipertahankan → realtime tetap jalan.
   - **AI CCTV & Detection History (partial dashboard)**: dikembalikan ke tampilan tabel/card normal (BUKAN dropdown). Map tidak di-collapse.
   - **"Weather by GIS Point" DIHAPUS dari sidebar** (redundan). Cuaca per-lokasi kini hanya di popup GIS. Section "Weather Monitoring" di popup ditambah **Temp & Humidity** (id baru `smart-popup-weather-temp`, `smart-popup-weather-humidity`), diisi via `updateWeatherPanel()` di `smart-gis-popup.js` (field `weather.temperature` / `weather.humidity`). Sidebar sekarang 3 section: IoT Sensor, Flood Decision, Weather Bandung.

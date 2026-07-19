@@ -20,12 +20,11 @@
                     <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Waktu</th>
                     <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Lokasi</th>
                     <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Status</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">AI</th>
                 </tr>
             </thead>
             <tbody id="dash-history-tbody" class="divide-y divide-slate-100 bg-white">
                 <tr id="dash-history-state">
-                    <td colspan="4" class="px-4 py-8 text-center text-sm font-medium text-slate-400">
+                    <td colspan="3" class="px-4 py-8 text-center text-sm font-medium text-slate-400">
                         <span id="dash-history-state-msg">Memuat data...</span>
                     </td>
                 </tr>
@@ -83,13 +82,11 @@
 
                     const html = rows.map((r) => {
                         const m = statusMeta(r.status);
-                        const isFlood = String(r.ai_status).toUpperCase().includes('BANJIR') && !String(r.ai_status).toUpperCase().includes('TIDAK');
                         return (
                             '<tr data-dash-row class="transition hover:bg-slate-50">' +
                                 '<td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-600">' + esc(formatWib(r.timestamp)) + '</td>' +
                                 '<td class="whitespace-nowrap px-4 py-3 text-sm font-bold text-slate-950">' + esc(r.location) + '</td>' +
                                 '<td class="whitespace-nowrap px-4 py-3"><span class="soft-badge ring-1 ' + m.badge + '">' + m.label + '</span></td>' +
-                                '<td class="whitespace-nowrap px-4 py-3 text-sm font-bold ' + (isFlood ? 'text-red-600' : 'text-slate-500') + '">' + Math.round(Number(r.ai_confidence) || 0) + '%</td>' +
                             '</tr>'
                         );
                     }).join('');

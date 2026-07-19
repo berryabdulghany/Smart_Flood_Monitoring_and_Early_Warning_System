@@ -18,7 +18,7 @@ Tujuannya: agar decision engine backend & dokumentasi ikut ter-backup di GitHub.
 - `.env` — semua secret (password Mongo, API key OpenWeather, kredensial MQTT).
 - `docker/mongodb/init-mongo.js` — meng-hardcode password MongoDB.
 - `docker/mosquitto/passwd` & `generate_passwd.sh` — kredensial broker MQTT.
-- `Makefile` — meng-hardcode password MongoDB (`-p SmartFlood@2024`) di beberapa target.
+- `Makefile` — sekarang membaca kredensial dari `.env` (tidak lagi hardcoded).
 - `ai-engine/` — tidak berubah pada update ini; berisi model `.pt` berukuran besar.
 - `node_modules/`, `vendor/`, `public/build/`, `*.zip` — dependensi/artefak/arsip besar.
 

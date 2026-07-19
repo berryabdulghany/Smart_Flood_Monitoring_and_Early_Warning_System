@@ -63,8 +63,8 @@
 
             <x-dashboard.right-panel :alerts="$alerts" :locations="$locations" />
 
-            {{-- Detection History — selalu di paling bawah (full width di desktop) --}}
-            <div class="xl:col-span-2">
+            {{-- Detection History — kolom kiri bawah di desktop, paling bawah di mobile --}}
+            <div class="min-w-0">
                 @include('pages.partials.detection-history')
             </div>
         </main>
