@@ -343,7 +343,8 @@ docker cp "file.php" smart_flood_laravel:/var/www/html/... # Copy file ke contai
 - [ ] Dark mode (opsional)
 
 ### Catatan perubahan terbaru (19 Jul 2026)
-- **Sidebar**: menu "Weather Monitoring" dihapus; "Detection History" → label **"Flood Event History"** (sidebar + topbar + judul halaman disamakan).
+- **Sidebar**: "Detection History" → label **"Flood Event History"** (sidebar + topbar + judul disamakan).
+- **Weather Monitoring & Settings DIHAPUS TUNTAS** — menu + route (`/weather-monitoring`, `/settings`) + method controller (`weather()`, `settings()`) + file view (`weather.blade.php`, `settings.blade.php`) semua dihapus. URL keduanya kini 404. Menu final: Dashboard, Flood Map GIS, CCTV, IoT, Flood Event History.
 - **Dashboard mobile UX** (CSS/Blade saja, desktop TIDAK berubah, `app.js`/id tidak disentuh):
   - Ditemukan **deployment drift**: container menjalankan topbar lama + CSS build tanpa override mobile. Diperbaiki dengan `npm run build` + deploy ulang `public/build` & `resources/views` → topbar mobile turun dari ~213px ke ~104px, map mobile 560px → 320px.
   - **Urutan mobile: GIS-first** — 4 status card + Map GIS di ATAS (inti web = pemantauan GIS), lalu AI CCTV + history, baru panel realtime (IoT/Flood/Weather) di bawah. Ini urutan DOM natural (section sebelum aside), tanpa `order` class. Desktop tetap 2 kolom.
@@ -352,6 +353,9 @@ docker cp "file.php" smart_flood_laravel:/var/www/html/... # Copy file ke contai
   - **Detection History dashboard**: kini LIVE (fetch `/flood/history?limit=6`, 6 event terbaru) + tombol "Lihat Semua" ke halaman penuh. Kolom: Waktu, Lokasi, Status (kolom AI dihapus atas permintaan). Posisi: child ke-3 `<main>` TANPA `col-span` → desktop jatuh ke kolom KIRI bawah (tidak menimpa panel kanan), mobile paling bawah. Bukan lagi dummy `$history`.
   - **Panel kanan (right-panel) TIDAK pakai dropdown lagi** (user tidak suka accordion). Sekarang: kartu ringkas selalu tampil, judul section tampil di mobile, Flood Decision punya **hero count besar khusus mobile** (`xl:hidden`) + chip kecil khusus desktop (`hidden xl:flex`) — keduanya bawa `data-flood-count-*` (JS `querySelectorAll` update semua). `toggleRightPanel()` sudah dihapus. Semua id/data-attribute dipertahankan → realtime tetap jalan.
   - **AI CCTV & Detection History (partial dashboard)**: dikembalikan ke tampilan tabel/card normal (BUKAN dropdown). Map tidak di-collapse.
+  - **IoT Monitoring & CCTV Monitoring jadi LIVE** (dulu dummy statis):
+    - IoT (`iot.blade.php`): kartu sensor realtime dari `/sensor/latest` (polling 5s, format WIB, status Online/Data-lama). Grafik trend DIHAPUS (sesuai realita 1 node sensor pilot yang dipindah antar titik; multi-node = saran Bab 5). Tidak butuh endpoint baru.
+    - CCTV (`cctv.blade.php` + modul baru `resources/js/cctv-monitor.js`): video stream HLS asli (pelindung.bandung.go.id) via `import('hls.js')` + fallback video simulasi; status AI live per lokasi dari `/detection/history` (dicocokkan via normalisasi nama lokasi). Modul di-import di `app.js`.
   - **"Weather by GIS Point" DIHAPUS dari sidebar** (redundan). Cuaca per-lokasi kini hanya di popup GIS. Section "Weather Monitoring" di popup ditambah **Temp & Humidity** (id baru `smart-popup-weather-temp`, `smart-popup-weather-humidity`), diisi via `updateWeatherPanel()` di `smart-gis-popup.js` (field `weather.temperature` / `weather.humidity`). Sidebar sekarang 3 section: IoT Sensor, Flood Decision, Weather Bandung.
   - **Compaction**: padding/gap `main` dikecilkan di mobile (`p-3 gap-3` → `sm:p-6 sm:gap-4`).
 - **Detection History → Flood Event History**: kini menampilkan **keputusan banjir 3 indikator** (level air + curah hujan + AI), bukan lagi AI mentah / dummy.

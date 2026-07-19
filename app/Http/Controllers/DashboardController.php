@@ -38,27 +38,11 @@ class DashboardController extends Controller
         ]));
     }
 
-    public function weather(): View
-    {
-        return view('pages.monitoring.weather', $this->dashboardData([
-            'pageTitle' => 'Weather Monitoring',
-            'pageSubtitle' => 'BMKG weather intelligence and short-term flood prediction.',
-        ]));
-    }
-
     public function history(): View
     {
         return view('pages.monitoring.history', $this->dashboardData([
             'pageTitle' => 'Flood Event History',
             'pageSubtitle' => 'Log keputusan banjir dari 3 indikator: level air, curah hujan, dan AI.',
-        ]));
-    }
-
-    public function settings(): View
-    {
-        return view('pages.monitoring.settings', $this->dashboardData([
-            'pageTitle' => 'Settings',
-            'pageSubtitle' => 'System configuration for CCTV, AI threshold, sensors, and API integrations.',
         ]));
     }
 

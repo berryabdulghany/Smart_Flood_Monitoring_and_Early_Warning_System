@@ -5,7 +5,6 @@
         ['label' => 'CCTV Monitoring', 'icon' => 'video', 'route' => 'cctv'],
         ['label' => 'IoT Monitoring', 'icon' => 'activity', 'route' => 'iot'],
         ['label' => 'Flood Event History', 'icon' => 'history', 'route' => 'history'],
-        ['label' => 'Settings', 'icon' => 'settings', 'route' => 'settings'],
     ];
 @endphp
 
