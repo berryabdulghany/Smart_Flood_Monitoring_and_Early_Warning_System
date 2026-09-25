@@ -9,6 +9,7 @@
 #   - AI tidak tersedia != AI bilang aman
 # ================================================================
 
+import os
 import threading
 import time
 from datetime import datetime, timedelta
@@ -20,7 +21,7 @@ from database import (
     flood_history_collection,
     flood_state_collection,
 )
-from flood_decision import decide_flood_status, STATUS_LABEL
+from flood_decision import decide_flood_status, ai_terkonfirmasi, STATUS_LABEL
 from lokasi import ID_LOKASI, normalisasi_lokasi, info_lokasi
 
 # ===================== PARAMETER =====================
@@ -28,6 +29,12 @@ TURUN_BUTUH_PEMBACAAN = 3      # anti status berkedip di sekitar ambang
 AI_KEDALUWARSA_MENIT = 15      # deteksi AI lebih tua dari ini -> dianggap tidak tersedia
 NODE_ONLINE_MENIT = 10         # sensor lebih tua dari ini -> node offline
 AMBANG_BANJIR_CM = 30          # samakan dgn WATER_FLOOD_CM di flood_decision.py
+
+# Konfirmasi temporal deteksi visual: BANJIR baru dianggap sah setelah muncul pada
+# N pemeriksaan AI BERTURUT-TURUT. Dasar angkanya: dari 2.317 pemeriksaan nyata,
+# 70 deteksi keliru seluruhnya berumur pendek (< 1 menit), sedangkan genangan
+# sungguhan bertahan jauh lebih lama.
+AI_KONFIRMASI_BERUNTUN = int(os.getenv("AI_KONFIRMASI_BERUNTUN", "2"))
 
 TINGKAT = {"safe": 0, "warning": 1, "danger": 2}
 
@@ -103,6 +110,40 @@ def _ai_masih_berlaku(ai_doc):
         return False
 
 
+# ===================== KONFIRMASI TEMPORAL AI =====================
+
+def _terapkan_konfirmasi_ai(id_lokasi, ai_doc, ai_mentah, majukan):
+    """Hitung berapa kali BERTURUT-TURUT pemeriksaan AI melihat banjir.
+
+    Pencacah hanya maju pada pemeriksaan yang BENAR-BENAR BARU, dikenali dari
+    timestamp dokumen AI. Ini penting karena evaluator berjalan tiap 15 detik
+    sedangkan pemeriksa visual hanya menyentuh satu lokasi tiap ~60 detik --
+    tanpa penjagaan ini satu dokumen AI yang sama akan dihitung berkali-kali dan
+    konfirmasi temporalnya menjadi tidak bermakna.
+
+    majukan=False (jalur baca-saja) hanya membaca keadaan tersimpan.
+    """
+    state = flood_state_collection.find_one({"lokasi": id_lokasi}) or {}
+    beruntun = int(state.get("ai_beruntun", 0))
+    ts_tercatat = state.get("ai_ts_dihitung")
+    ts_baru = ai_doc.get("timestamp")
+
+    if not majukan:
+        return beruntun >= AI_KONFIRMASI_BERUNTUN, beruntun
+
+    if ts_baru is not None and ts_baru != ts_tercatat:
+        beruntun = beruntun + 1 if ai_mentah else 0
+        flood_state_collection.update_one(
+            {"lokasi": id_lokasi},
+            {"$set": {"lokasi": id_lokasi,
+                      "ai_beruntun": beruntun,
+                      "ai_ts_dihitung": ts_baru}},
+            upsert=True,
+        )
+
+    return beruntun >= AI_KONFIRMASI_BERUNTUN, beruntun
+
+
 # ===================== HYSTERESIS =====================
 
 def _terapkan_hysteresis(id_lokasi, status_mentah):
@@ -157,6 +198,15 @@ def evaluasi_lokasi(id_lokasi, catat_riwayat=True):
     intensitas = _angka(sensor.get("curah_hujan_per_jam"), 0.0)
     window_penuh = bool(sensor.get("window_penuh", True)) and punya_intensitas
 
+    # Konfirmasi temporal: pencacah hanya dimajukan pada evaluasi OTORITATIF supaya
+    # polling baca-saja tiap 5 detik tidak ikut menghabiskan hitungannya.
+    ai_mentah = ai_terkonfirmasi(
+        ai_doc.get("status"), ai_doc.get("confidence", 0), ai_tersedia
+    )
+    ai_konfirmasi_cukup, ai_beruntun = _terapkan_konfirmasi_ai(
+        id_lokasi, ai_doc, ai_mentah, majukan=catat_riwayat
+    )
+
     keputusan = decide_flood_status(
         level_air=level_air,
         curah_hujan_per_jam=intensitas,
@@ -164,6 +214,7 @@ def evaluasi_lokasi(id_lokasi, catat_riwayat=True):
         ai_confidence=ai_doc.get("confidence", 0),
         window_penuh=window_penuh,
         ai_tersedia=ai_tersedia,
+        ai_konfirmasi_cukup=ai_konfirmasi_cukup,
     )
 
     if catat_riwayat:
@@ -209,6 +260,9 @@ def evaluasi_lokasi(id_lokasi, catat_riwayat=True):
         "kategori_hujan_label": keputusan["kategori_hujan_label"],
         "hujan_valid": keputusan["hujan_valid"],
         "ai_terkonfirmasi": keputusan["ai_terkonfirmasi"],
+        "ai_deteksi_mentah": keputusan["ai_deteksi_mentah"],
+        "ai_beruntun": ai_beruntun,
+        "ai_konfirmasi_dibutuhkan": AI_KONFIRMASI_BERUNTUN,
         "ai_tersedia": ai_tersedia,
         "ai_confidence": _angka(ai_doc.get("confidence"), 0),
         "ai_status": ai_doc.get("status"),

@@ -59,6 +59,59 @@ WORKER_INTERVAL = float(os.environ.get("AI_WORKER_INTERVAL", "20"))  # detik/tic
 # restart container):  file ADA -> worker dijeda,  file TIDAK ADA -> worker jalan.
 WORKER_PAUSE_FLAG = os.path.join(UPLOAD_FOLDER, "WORKER_OFF")
 
+# ================= KESEHATAN SIARAN [T-1] =================
+# Siaran CCTV dapat mati di sisi penyedia tanpa pemberitahuan. Sebelum ini, worker
+# hanya mencetak galat ke log lalu melanjutkan ke lokasi berikutnya, sehingga sebuah
+# titik dapat berhenti diperiksa berhari-hari tanpa ada yang menyadarinya.
+GAGAL_BERUNTUN_MATI = int(os.environ.get("AI_GAGAL_BERUNTUN_MATI", "3"))
+
+_kesehatan = {}
+_kesehatan_lock = threading.Lock()
+
+
+def catat_kesehatan(location_id, berhasil, pesan=None):
+    """Catat hasil satu percobaan pemeriksaan siaran."""
+    with _kesehatan_lock:
+        d = _kesehatan.setdefault(location_id, {
+            "gagal_beruntun": 0,
+            "terakhir_berhasil": None,
+            "terakhir_galat": None,
+            "pesan_galat": None,
+        })
+        if berhasil:
+            d["gagal_beruntun"] = 0
+            d["terakhir_berhasil"] = datetime.now()
+            d["pesan_galat"] = None
+        else:
+            d["gagal_beruntun"] += 1
+            d["terakhir_galat"] = datetime.now()
+            d["pesan_galat"] = pesan
+
+
+def ringkasan_kesehatan():
+    """Ringkasan siap kirim sebagai JSON untuk seluruh lokasi terdaftar."""
+    with _kesehatan_lock:
+        hasil = {}
+        for lok in LIVE_STREAMS:
+            d = _kesehatan.get(lok)
+            if d is None:
+                hasil[lok] = {"status": "belum diperiksa", "gagal_beruntun": 0,
+                              "terakhir_berhasil": None, "pesan_galat": None}
+                continue
+            if d["gagal_beruntun"] >= GAGAL_BERUNTUN_MATI:
+                status = "mati"
+            elif d["gagal_beruntun"] > 0:
+                status = "terganggu"
+            else:
+                status = "sehat"
+            hasil[lok] = {
+                "status": status,
+                "gagal_beruntun": d["gagal_beruntun"],
+                "terakhir_berhasil": d["terakhir_berhasil"].isoformat() if d["terakhir_berhasil"] else None,
+                "pesan_galat": d["pesan_galat"],
+            }
+        return hasil
+
 # ================= HELPER YOLO =================
 
 def jalankan_yolo(filepath):
@@ -121,7 +174,9 @@ def status():
 @app.route('/detect', methods=['POST'])
 def detect():
     if 'file' not in request.files:
-        return jsonify({"error": "No file uploaded"})
+        # [T-3] Kembalikan 400, bukan 200. Tanpa ini klien tidak dapat
+        # membedakan permintaan berhasil dari permintaan yang ditolak.
+        return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files['file']
     location = request.form.get("location", "Unknown")
@@ -203,12 +258,33 @@ def deteksi_dari_stream(location_id):
 
 @app.route('/worker/status', methods=['GET'])
 def worker_status():
-    """Status worker AI: nyala/mati + parameternya."""
+    """Status worker AI: nyala/mati, parameter, dan kesehatan tiap siaran."""
     return jsonify({
         "enabled": not os.path.exists(WORKER_PAUSE_FLAG),
         "interval_detik": WORKER_INTERVAL,
         "lokasi": list(LIVE_STREAMS.keys()),
+        "kesehatan_siaran": ringkasan_kesehatan(),
     })
+
+
+@app.route('/health/streams', methods=['GET'])
+def health_streams():
+    """[T-1] Kesehatan siaran CCTV per lokasi.
+
+    Dibuat setelah siaran Pasir Koja mati di sisi penyedia dan worker berhenti
+    memeriksanya tanpa memberi peringatan apa pun. Endpoint ini membuat kegagalan
+    yang selama ini senyap menjadi terlihat.
+
+    Balasan HTTP 503 bila ada minimal satu siaran berstatus 'mati', supaya
+    pemantauan luar dapat menangkapnya tanpa perlu menelaah isi JSON.
+    """
+    ringkas = ringkasan_kesehatan()
+    ada_mati = any(v["status"] == "mati" for v in ringkas.values())
+    return jsonify({
+        "sehat": not ada_mati,
+        "ambang_dianggap_mati": GAGAL_BERUNTUN_MATI,
+        "siaran": ringkas,
+    }), (503 if ada_mati else 200)
 
 
 @app.route('/worker/toggle', methods=['POST'])
@@ -270,8 +346,16 @@ def _worker_loop():
         try:
             hasil = deteksi_dari_stream(lok)
             if hasil:
+                catat_kesehatan(lok, True)
                 print("[ai-worker] %s -> %s (%.2f)" % (lok, hasil["status"], hasil["confidence"]), flush=True)
+            else:
+                # [T-1] Siaran tidak dapat dibuka. Tanpa pencatatan ini, siaran yang
+                # mati di sisi penyedia membuat worker berhenti memeriksa lokasi itu
+                # tanpa memberi peringatan apa pun.
+                catat_kesehatan(lok, False, "siaran tidak dapat dibuka")
+                print("[ai-worker] %s -> SIARAN TIDAK TERSEDIA" % lok, flush=True)
         except Exception as e:
+            catat_kesehatan(lok, False, str(e))
             print("[ai-worker] error %s: %s" % (lok, e), flush=True)
         i += 1
         time.sleep(WORKER_INTERVAL)

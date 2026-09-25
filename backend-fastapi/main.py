@@ -137,10 +137,30 @@ def get_latest_sensor(lokasi: Optional[str] = Query(None, description="kopo | pa
 # ================= SENSOR PER SEMUA LOKASI =================
 
 @app.get("/sensor/by-location")
-def get_sensor_by_location():
-    """Pembacaan terbaru untuk SETIAP lokasi (untuk halaman IoT / dashboard)."""
+def get_sensor_by_location(lokasi: Optional[str] = Query(default=None)):
+    """Pembacaan terbaru untuk SETIAP lokasi (untuk halaman IoT / dashboard).
+
+    [T-4] Bila parameter `lokasi` diisi, nilainya divalidasi lebih dulu. Nilai yang
+    tidak dikenal ditolak dengan HTTP 400 alih-alih diam-diam mengembalikan seluruh
+    lokasi seperti perilaku sebelumnya. Tanpa parameter, perilakunya tidak berubah
+    sehingga pemanggil lama tetap berjalan.
+    """
+    daftar = LOKASI
+    if lokasi is not None:
+        id_lokasi = normalisasi_lokasi(lokasi)
+        if id_lokasi == UNKNOWN:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": "lokasi tidak dikenal",
+                    "diterima": lokasi,
+                    "pilihan_sah": [l["id"] for l in LOKASI],
+                },
+            )
+        daftar = [l for l in LOKASI if l["id"] == id_lokasi]
+
     hasil = []
-    for l in LOKASI:
+    for l in daftar:
         doc = sensor_collection.find_one({"lokasi": l["id"]}, sort=[("created_at", -1)])
         hasil.append({
             "lokasi": l["id"],

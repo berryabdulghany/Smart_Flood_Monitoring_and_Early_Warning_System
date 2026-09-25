@@ -82,6 +82,7 @@ def decide_flood_status(
     ai_confidence=0,
     window_penuh=True,
     ai_tersedia=True,
+    ai_konfirmasi_cukup=True,
 ):
     """Keputusan akhir dari 3 indikator.
 
@@ -97,7 +98,14 @@ def decide_flood_status(
 
     hujan_valid = bool(window_penuh)
     hujan_lebat = hujan_valid and _num(curah_hujan_per_jam) >= RAIN_HEAVY_MM_PER_HOUR
-    ai_ok = ai_terkonfirmasi(ai_status, ai_confidence, ai_tersedia)
+    # Deteksi mentah: model melihat banjir dengan keyakinan >= ambang.
+    ai_mentah = ai_terkonfirmasi(ai_status, ai_confidence, ai_tersedia)
+
+    # Konfirmasi temporal: deteksi baru dianggap sah setelah muncul pada beberapa
+    # pemeriksaan berturut-turut. Pengujian 2.317 pemeriksaan menunjukkan seluruh
+    # 70 deteksi keliru berumur pendek (< 1 menit), sehingga penyaringan ini
+    # membuang hampir semuanya tanpa mengorbankan deteksi yang bertahan.
+    ai_ok = ai_mentah and bool(ai_konfirmasi_cukup)
 
     # ---------- 1. Pengukuran: >= 30 cm langsung Banjir ----------
     if status_air == "danger":
@@ -114,7 +122,7 @@ def decide_flood_status(
             alasan = "Level air waspada disertai hujan lebat; risiko naik namun belum memenuhi ambang banjir."
         else:
             final = "warning"
-            alasan = "Level air berada pada rentang waspada (10-20 cm)."
+            alasan = "Level air berada pada rentang waspada (10-29 cm)."
 
     # ---------- 3. Air Aman: naik maksimal satu tingkat ----------
     else:
@@ -134,6 +142,9 @@ def decide_flood_status(
     if not hujan_valid:
         alasan += " (Data hujan < 60 menit, belum valid untuk pemicu.)"
 
+    if ai_mentah and not ai_konfirmasi_cukup:
+        alasan += " (AI melihat indikasi genangan, menunggu konfirmasi pemeriksaan berikutnya.)"
+
     return {
         "status": final,
         "label": STATUS_LABEL[final],
@@ -147,5 +158,7 @@ def decide_flood_status(
         "hujan_valid": hujan_valid,
         "hujan_lebat": hujan_lebat,
         "ai_terkonfirmasi": ai_ok,
+        "ai_deteksi_mentah": ai_mentah,
+        "ai_konfirmasi_cukup": bool(ai_konfirmasi_cukup),
         "ai_tersedia": bool(ai_tersedia),
     }
