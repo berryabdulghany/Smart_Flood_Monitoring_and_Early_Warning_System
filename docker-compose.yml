@@ -20,7 +20,9 @@ services:
       - mongodb_config:/data/configdb
       - ./docker/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     ports:
-      - "27017:27017"
+      # Bind ke localhost saja -> Mongo TIDAK terekspos ke internet.
+      # FastAPI tetap mengakses via DNS jaringan Docker (mongodb:27017).
+      - "127.0.0.1:27017:27017"
     networks:
       - smart_flood_network
     healthcheck:
@@ -63,6 +65,9 @@ services:
       dockerfile: Dockerfile
     container_name: smart_flood_fastapi
     restart: unless-stopped
+    # [FIX] 1 worker saja. Dengan >1 worker, tiap worker meng-import mqtt_client
+    # dan subscribe sendiri -> setiap pesan MQTT tersimpan GANDA ke MongoDB.
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
     environment:
       MONGO_URL: ${MONGO_URL}
       MQTT_BROKER: ${MQTT_BROKER}
@@ -70,6 +75,11 @@ services:
       MQTT_TOPIC: ${MQTT_TOPIC}
       MQTT_USERNAME: ${MQTT_USERNAME}
       MQTT_PASSWORD: ${MQTT_PASSWORD}
+      # Akun Admin awal (use case "Login"). Disimpan di MongoDB koleksi `users`,
+      # hanya dibuat bila koleksi masih kosong.
+      ADMIN_NAME: ${ADMIN_NAME}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     ports:
       - "${FASTAPI_PORT}:8000"
     networks:

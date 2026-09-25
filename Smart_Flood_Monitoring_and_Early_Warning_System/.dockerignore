@@ -1,0 +1,49 @@
+# ================================================================
+# .dockerignore — Laravel
+# Taruh file ini di dalam folder Smart_Flood_Monitoring_and_Early_Warning_System/
+# ================================================================
+
+# Dependencies (akan di-install ulang saat build)
+node_modules/
+vendor/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Build output (akan di-rebuild)
+public/build/
+public/hot
+
+# Laravel runtime (bukan bagian dari image)
+storage/logs/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*.php
+
+# Env files
+.env
+.env.*
+
+# Test files
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.editorconfig
+.styleci.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile
+.dockerignore

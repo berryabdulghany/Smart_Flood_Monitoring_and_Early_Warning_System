@@ -1,0 +1,14 @@
+# Bytecode Python
+__pycache__/
+*.py[cod]
+
+# Bingkai hasil tangkapan saat berjalan — dibuat ulang tiap pemeriksaan
+uploads/live-*.jpg
+uploads/cctv-frame.jpg
+uploads/*-frame.jpg
+
+# Saklar jeda worker — keadaan jalan, bukan kode
+uploads/WORKER_OFF
+
+# Rahasia
+.env

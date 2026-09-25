@@ -1,24 +1,97 @@
-*.log
-.DS_Store
+# ============================================================
+#  SMART FLOOD MONITORING AND EARLY WARNING SYSTEM (SFMEWS)
+# ============================================================
+
+# ---------- RAHASIA — JANGAN PERNAH DIKOMIT ----------
+# Repositori ini direncanakan menjadi publik. Riwayat git bersifat permanen:
+# berkas rahasia yang sekali terkomit tetap dapat dibaca meski dihapus kemudian.
 .env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
-/auth.json
-/node_modules
-/public/build
-/public/hot
-/public/storage
-/storage/*.key
-/storage/pail
-/vendor
-Homestead.json
-Homestead.yaml
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Berkas sandi Mosquitto — dibangkitkan ulang oleh generate_passwd.sh
+docker/mosquitto/passwd
+
+# Sertifikat dan kunci
+*.pem
+*.key
+*.crt
+*.p12
+certbot/
+letsencrypt/
+
+# ---------- DEPENDENSI (dibangun ulang oleh Docker) ----------
+# Dockerfile Laravel sudah menjalankan composer install, npm ci, dan npm run build
+vendor/
+node_modules/
+**/vendor/
+**/node_modules/
+
+# ---------- HASIL BUILD ----------
+public/build/
+**/public/build/
+public_shared/
+**/public_shared/
+.vite/
+
+# ---------- PYTHON ----------
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ---------- LARAVEL ----------
+**/storage/*.key
+**/storage/framework/cache/*
+**/storage/framework/sessions/*
+**/storage/framework/views/*
+**/storage/logs/*
+**/bootstrap/cache/*
+!**/storage/framework/cache/.gitkeep
+!**/storage/framework/sessions/.gitkeep
+!**/storage/framework/views/.gitkeep
+!**/storage/logs/.gitkeep
+
+# ---------- DATA JALAN & KELUARAN SEMENTARA ----------
+# Citra hasil tangkapan worker AI; dibuat ulang saat berjalan
+ai-engine/uploads/*
+!ai-engine/uploads/.gitkeep
+# Saklar jeda worker AI — keadaan jalan, bukan kode
+ai-engine/uploads/WORKER_OFF
+
+# ---------- ARSIP & CADANGAN LAMA ----------
+# Tiga berkas ini masing-masing 181 MB; GitHub menolak berkas di atas 100 MB
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.bak
+*.backup
+
+# ---------- BASIS DATA LOKAL ----------
+data/
+mongo-data/
+*.sqlite
+*.db
+
+# ---------- SISTEM OPERASI & EDITOR ----------
+.DS_Store
 Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
+
+# ---------- CATATAN PRIBADI ----------
+# Catatan kerja internal, bukan bagian dari perangkat lunak
+PROJECT_REKAP.md
+
+# Konfigurasi alat lokal
+.claude/

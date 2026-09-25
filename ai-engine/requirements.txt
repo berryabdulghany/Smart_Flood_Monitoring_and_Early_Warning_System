@@ -1,0 +1,16 @@
+flask==3.1.0
+flask-cors==5.0.0
+opencv-python-headless==4.10.0.84
+pymongo==4.10.1
+python-dotenv==1.0.1
+gunicorn==23.0.0
+matplotlib==3.9.4
+pandas==2.2.3
+scipy==1.13.1
+seaborn==0.13.2
+requests==2.32.3
+pyyaml==6.0.2
+psutil==6.1.1
+tqdm>=4.64.0
+py-cpuinfo
+ultralytics-thop>=2.0.0
