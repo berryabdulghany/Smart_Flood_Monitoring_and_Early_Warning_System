@@ -65,52 +65,58 @@ WORKER_PAUSE_FLAG = os.path.join(UPLOAD_FOLDER, "WORKER_OFF")
 # titik dapat berhenti diperiksa berhari-hari tanpa ada yang menyadarinya.
 GAGAL_BERUNTUN_MATI = int(os.environ.get("AI_GAGAL_BERUNTUN_MATI", "3"))
 
-_kesehatan = {}
-_kesehatan_lock = threading.Lock()
+# PENTING: keadaan ini TIDAK boleh disimpan di memori proses. Kontainer dijalankan
+# dengan `gunicorn --workers 2`, sehingga worker latar hidup di salah satu proses
+# sedangkan permintaan HTTP dapat dilayani proses lainnya — dict biasa tidak akan
+# terlihat oleh keduanya. Karena itu keadaan disimpan di MongoDB, sejalan dengan
+# cara ai_terkini dipakai.
 
 
 def catat_kesehatan(location_id, berhasil, pesan=None):
-    """Catat hasil satu percobaan pemeriksaan siaran."""
-    with _kesehatan_lock:
-        d = _kesehatan.setdefault(location_id, {
-            "gagal_beruntun": 0,
-            "terakhir_berhasil": None,
-            "terakhir_galat": None,
-            "pesan_galat": None,
-        })
-        if berhasil:
-            d["gagal_beruntun"] = 0
-            d["terakhir_berhasil"] = datetime.now()
-            d["pesan_galat"] = None
-        else:
-            d["gagal_beruntun"] += 1
-            d["terakhir_galat"] = datetime.now()
-            d["pesan_galat"] = pesan
+    """Catat hasil satu percobaan pemeriksaan siaran ke MongoDB."""
+    nama = NAMA_LOKASI.get(location_id, location_id)
+    if berhasil:
+        ai_terkini_collection.update_one(
+            {"location": nama},
+            {"$set": {"gagal_beruntun": 0,
+                      "terakhir_berhasil": datetime.now(),
+                      "pesan_galat": None}},
+            upsert=True,
+        )
+    else:
+        ai_terkini_collection.update_one(
+            {"location": nama},
+            {"$inc": {"gagal_beruntun": 1},
+             "$set": {"terakhir_galat": datetime.now(), "pesan_galat": pesan}},
+            upsert=True,
+        )
 
 
 def ringkasan_kesehatan():
     """Ringkasan siap kirim sebagai JSON untuk seluruh lokasi terdaftar."""
-    with _kesehatan_lock:
-        hasil = {}
-        for lok in LIVE_STREAMS:
-            d = _kesehatan.get(lok)
-            if d is None:
-                hasil[lok] = {"status": "belum diperiksa", "gagal_beruntun": 0,
-                              "terakhir_berhasil": None, "pesan_galat": None}
-                continue
-            if d["gagal_beruntun"] >= GAGAL_BERUNTUN_MATI:
-                status = "mati"
-            elif d["gagal_beruntun"] > 0:
-                status = "terganggu"
-            else:
-                status = "sehat"
-            hasil[lok] = {
-                "status": status,
-                "gagal_beruntun": d["gagal_beruntun"],
-                "terakhir_berhasil": d["terakhir_berhasil"].isoformat() if d["terakhir_berhasil"] else None,
-                "pesan_galat": d["pesan_galat"],
-            }
-        return hasil
+    hasil = {}
+    for lok in LIVE_STREAMS:
+        nama = NAMA_LOKASI.get(lok, lok)
+        d = ai_terkini_collection.find_one({"location": nama}) or {}
+        gagal = int(d.get("gagal_beruntun", 0) or 0)
+        berhasil_pada = d.get("terakhir_berhasil")
+
+        if berhasil_pada is None and gagal == 0:
+            status = "belum diperiksa"
+        elif gagal >= GAGAL_BERUNTUN_MATI:
+            status = "mati"
+        elif gagal > 0:
+            status = "terganggu"
+        else:
+            status = "sehat"
+
+        hasil[lok] = {
+            "status": status,
+            "gagal_beruntun": gagal,
+            "terakhir_berhasil": berhasil_pada.isoformat() if berhasil_pada else None,
+            "pesan_galat": d.get("pesan_galat"),
+        }
+    return hasil
 
 # ================= HELPER YOLO =================
 
