@@ -24,18 +24,24 @@
             </h1>
         </div>
 
+        {{-- Toggle bahasa ID <-> EN (desktop; versi mobile ada di baris status bawah) --}}
+        <button data-lang-toggle type="button" title="Bahasa / Language"
+                class="hidden h-9 min-w-[2.25rem] shrink-0 place-items-center rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-extrabold text-slate-600 shadow-sm transition hover:border-cyan-300 hover:text-cyan-600 md:grid">
+            EN
+        </button>
+
         {{-- Status pills — hidden on mobile, visible on md+ --}}
         <div class="hidden shrink-0 items-center gap-1.5 md:flex">
-            <div class="metric-pill text-emerald-700">
+            <div class="metric-pill text-slate-500" data-sys-api-pill>
                 <span class="relative flex h-2.5 w-2.5">
-                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+                    <span class="absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75" data-sys-api-ping></span>
+                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-slate-400" data-sys-api-dot></span>
                 </span>
-                {{ $stats['system_status'] }}
+                <span data-sys-api-label>{{ $stats['system_status'] }}</span>
             </div>
-            <div class="metric-pill"><i data-lucide="video" class="h-3.5 w-3.5 text-cyan-600"></i>{{ $stats['active_cctv'] }} CCTV</div>
-            <div class="metric-pill"><i data-lucide="radio-tower" class="h-3.5 w-3.5 text-blue-600"></i>{{ $stats['active_sensors'] }} Sensor</div>
-            <div class="metric-pill"><i data-lucide="brain-circuit" class="h-3.5 w-3.5 text-red-500"></i>{{ $stats['ai_status'] }}</div>
+            <div class="metric-pill"><i data-lucide="video" class="h-3.5 w-3.5 text-cyan-600"></i><span data-sys-cctv>{{ $stats['active_cctv'] }} CCTV</span></div>
+            <div class="metric-pill"><i data-lucide="radio-tower" class="h-3.5 w-3.5 text-blue-600"></i><span data-sys-sensor>{{ $stats['active_sensors'] }} Sensor</span></div>
+            <div class="metric-pill" data-sys-ai-pill><i data-lucide="brain-circuit" class="h-3.5 w-3.5 text-red-500"></i><span data-sys-ai>{{ $stats['ai_status'] }}</span></div>
             <div class="metric-pill min-w-36 justify-center font-mono text-slate-700" id="realtime-clock">--:--:--</div>
         </div>
     </div>
@@ -43,21 +49,25 @@
     {{-- Mobile status bar — horizontally scrollable, no scrollbar --}}
     <div class="flex items-center gap-2 overflow-x-auto border-t border-slate-100/80 bg-slate-50/60 px-4 py-2 md:hidden"
          style="scrollbar-width:none;-ms-overflow-style:none;">
-        <div class="metric-pill shrink-0 text-emerald-700" style="min-height:1.9rem;padding:.3rem .6rem;font-size:.7rem;">
+        <button data-lang-toggle type="button" title="Bahasa / Language"
+                class="metric-pill shrink-0 font-extrabold text-slate-600" style="min-height:1.9rem;padding:.3rem .7rem;font-size:.7rem;">
+            EN
+        </button>
+        <div class="metric-pill shrink-0 text-slate-500" data-sys-api-pill style="min-height:1.9rem;padding:.3rem .6rem;font-size:.7rem;">
             <span class="relative flex h-2 w-2">
-                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+                <span class="absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75" data-sys-api-ping></span>
+                <span class="relative inline-flex h-2 w-2 rounded-full bg-slate-400" data-sys-api-dot></span>
             </span>
-            {{ $stats['system_status'] }}
+            <span data-sys-api-label>{{ $stats['system_status'] }}</span>
         </div>
         <div class="metric-pill shrink-0" style="min-height:1.9rem;padding:.3rem .6rem;font-size:.7rem;">
-            <i data-lucide="video" class="h-3 w-3 text-cyan-600"></i>{{ $stats['active_cctv'] }} CCTV
+            <i data-lucide="video" class="h-3 w-3 text-cyan-600"></i><span data-sys-cctv>{{ $stats['active_cctv'] }} CCTV</span>
         </div>
         <div class="metric-pill shrink-0" style="min-height:1.9rem;padding:.3rem .6rem;font-size:.7rem;">
-            <i data-lucide="radio-tower" class="h-3 w-3 text-blue-600"></i>{{ $stats['active_sensors'] }} Sensor
+            <i data-lucide="radio-tower" class="h-3 w-3 text-blue-600"></i><span data-sys-sensor>{{ $stats['active_sensors'] }} Sensor</span>
         </div>
-        <div class="metric-pill shrink-0" style="min-height:1.9rem;padding:.3rem .6rem;font-size:.7rem;">
-            <i data-lucide="brain-circuit" class="h-3 w-3 text-red-500"></i>{{ $stats['ai_status'] }}
+        <div class="metric-pill shrink-0" data-sys-ai-pill style="min-height:1.9rem;padding:.3rem .6rem;font-size:.7rem;">
+            <i data-lucide="brain-circuit" class="h-3 w-3 text-red-500"></i><span data-sys-ai>{{ $stats['ai_status'] }}</span>
         </div>
     </div>
 </header>

@@ -97,7 +97,7 @@ async function setupVideo(video) {
 
 // ============ STATUS AI LIVE ============
 async function pollAi() {
-    const endpoint = 'http://' + window.location.hostname + ':8000/detection/history?limit=60';
+    const endpoint = (window.SFMEWS_ENDPOINT?.api || ('http://' + window.location.hostname + ':8000')) + '/detection/history?limit=60';
     try {
         const res = await fetch(endpoint, { cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -139,14 +139,139 @@ async function pollAi() {
     }
 }
 
+// ================================================================
+// DASHBOARD: TOGGLE PLAYBACK <-> LIVE  (saran dosen)
+// Memakai ulang helper HLS di atas agar tidak ada duplikasi kode/URL.
+// ================================================================
+
+let dashHls = null;
+let modeLive = false;
+
+function lokasiTerpilih() {
+    const sel = document.getElementById('ai-monitoring-location');
+    if (!sel || sel.selectedIndex < 0) return null;
+    const opt = sel.options[sel.selectedIndex];
+    return opt ? opt.dataset.locationId : null;
+}
+
+function cariLokasi(id) {
+    const list = (window.SFMEWS && window.SFMEWS.locations) || [];
+    return list.find((l) => l.id === id) || null;
+}
+
+function destroyDashHls() {
+    if (dashHls) {
+        try { dashHls.destroy(); } catch (e) { /* noop */ }
+        dashHls = null;
+    }
+}
+
+async function pasangLive(video, badge) {
+    const loc = cariLokasi(lokasiTerpilih());
+    const url = loc && loc.cctv_live_url;
+    const nama = loc ? (loc.short_name || loc.name) : '';
+
+    destroyDashHls();
+    video.removeAttribute('src');
+    video.muted = true;
+    video.playsInline = true;
+    video.loop = false;
+
+    if (!url) {
+        if (badge) badge.textContent = 'URL siaran langsung tidak tersedia';
+        return;
+    }
+    if (badge) badge.textContent = 'Menyambungkan siaran langsung…';
+
+    // Safari / iOS
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url;
+        video.play().catch(() => {});
+        if (badge) badge.textContent = 'LIVE · ' + nama;
+        return;
+    }
+
+    try {
+        const Hls = await getHls();
+        if (!Hls.isSupported()) {
+            if (badge) badge.textContent = 'Browser tidak mendukung HLS';
+            return;
+        }
+        dashHls = new Hls({ lowLatencyMode: true, backBufferLength: 30 });
+        dashHls.loadSource(url);
+        dashHls.attachMedia(video);
+        dashHls.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (badge) badge.textContent = 'LIVE · ' + nama;
+            video.play().catch(() => {});
+        });
+        dashHls.on(Hls.Events.ERROR, (_, data) => {
+            if (data && data.fatal) {
+                destroyDashHls();
+                if (badge) badge.textContent = 'Siaran langsung tidak tersedia';
+            }
+        });
+    } catch (e) {
+        if (badge) badge.textContent = 'Gagal memuat siaran langsung';
+    }
+}
+
+function pasangPlayback(video, badge) {
+    destroyDashHls();
+    const sel = document.getElementById('ai-video-source');
+    const url = sel ? sel.value : null;
+    if (url) {
+        video.src = url;
+        video.loop = true;
+        video.load();
+        video.play().catch(() => {});
+    }
+    if (badge) badge.textContent = 'Playback rekaman';
+}
+
+function initModeToggle() {
+    const btnPlayback = document.getElementById('ai-mode-playback');
+    const btnLive = document.getElementById('ai-mode-live');
+    const video = document.getElementById('ai-cctv-video');
+    if (!btnPlayback || !btnLive || !video) return;
+
+    const badge = document.getElementById('ai-video-badge');
+    const srcSel = document.getElementById('ai-video-source');
+    const locSel = document.getElementById('ai-monitoring-location');
+
+    const gaya = () => {
+        const aktif = 'rounded-md px-3 py-1.5 text-xs font-bold transition bg-white/25 text-white';
+        const pasif = 'rounded-md px-3 py-1.5 text-xs font-bold transition text-white/60 hover:text-white';
+        btnPlayback.className = modeLive ? pasif : aktif;
+        btnLive.className = modeLive ? aktif : pasif;
+        btnPlayback.setAttribute('aria-pressed', String(!modeLive));
+        btnLive.setAttribute('aria-pressed', String(modeLive));
+        // pilihan file rekaman tidak relevan saat mode Live
+        if (srcSel) srcSel.style.display = modeLive ? 'none' : '';
+    };
+
+    btnPlayback.addEventListener('click', () => {
+        modeLive = false; gaya(); pasangPlayback(video, badge);
+    });
+    btnLive.addEventListener('click', () => {
+        modeLive = true; gaya(); pasangLive(video, badge);
+    });
+    // ganti lokasi saat mode Live -> pindah stream
+    locSel?.addEventListener('change', () => {
+        if (modeLive) setTimeout(() => pasangLive(video, badge), 50);
+    });
+
+    gaya();
+}
+
 // ============ INIT ============
 function init() {
     const players = document.querySelectorAll('[data-cctv-player]');
-    if (!players.length) return; // hanya di halaman CCTV
-
-    players.forEach(setupVideo);
-    pollAi();
-    setInterval(pollAi, 10000);
+    if (players.length) {              // halaman CCTV Monitoring
+        players.forEach(setupVideo);
+        pollAi();
+        setInterval(pollAi, 10000);
+    }
+    initModeToggle();                  // dashboard (kalau tombolnya ada)
 }
 
 if (document.readyState === 'loading') {

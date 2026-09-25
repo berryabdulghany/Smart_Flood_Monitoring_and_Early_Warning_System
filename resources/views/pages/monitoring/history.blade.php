@@ -8,45 +8,45 @@
             <section class="dashboard-card overflow-hidden">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
                     <div>
-                        <h2 class="text-xl font-bold text-slate-950">Flood Event History</h2>
+                        <h2 class="text-xl font-bold text-slate-950" data-i18n="nav.history">Flood Event History</h2>
                         <p class="text-sm font-medium text-slate-500">
-                            Riwayat keputusan banjir dari 3 indikator (level air + curah hujan + AI) &middot;
+                            <span data-i18n="history.subtitle">Riwayat keputusan banjir dari 3 indikator (level air + curah hujan + AI)</span> &middot;
                             <span id="history-count" class="font-bold text-cyan-700">Memuat...</span>
                         </p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button id="history-refresh" type="button" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:bg-slate-50">
                             <i data-lucide="refresh-cw" class="h-4 w-4"></i>
-                            Refresh
+                            <span data-i18n="common.refresh">Refresh</span>
                         </button>
                         <button id="history-export" type="button" class="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-cyan-100 transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50">
                             <i data-lucide="download" class="h-4 w-4"></i>
-                            Export CSV
+                            <span data-i18n="common.export-csv">Export CSV</span>
                         </button>
                     </div>
                 </div>
                 <div class="grid gap-3 border-b border-slate-200 bg-slate-50/70 p-4 md:grid-cols-[1fr_220px]">
                     <label class="relative">
                         <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
-                        <input data-history-search type="search" placeholder="Cari lokasi, status, atau waktu..." class="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium outline-none transition focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100">
+                        <input data-history-search type="search" data-i18n-ph="search.placeholder" placeholder="Cari lokasi, status, atau waktu..." class="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium outline-none transition focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100">
                     </label>
                     <select data-history-filter class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600 outline-none transition focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100">
-                        <option value="">Semua status</option>
-                        <option value="safe">Aman</option>
-                        <option value="warning">Waspada</option>
-                        <option value="danger">Banjir</option>
+                        <option value="" data-i18n="filter.all-status">Semua status</option>
+                        <option value="safe" data-i18n="flood.safe">Aman</option>
+                        <option value="warning" data-i18n="flood.warning">Waspada</option>
+                        <option value="danger" data-i18n="flood.danger">Banjir</option>
                     </select>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200">
                         <thead class="table-head">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Waktu</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Lokasi</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Level Air</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Curah Hujan</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">AI</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide" data-i18n="common.time">Waktu</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide" data-i18n="common.location">Lokasi</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide" data-i18n="common.status">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide" data-i18n="label.water">Level Air</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide" data-i18n="label.rainfall">Curah Hujan</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide" data-i18n="label.ai">AI</th>
                             </tr>
                         </thead>
                         <tbody id="history-tbody" class="divide-y divide-slate-100 bg-white">
@@ -65,7 +65,7 @@
     @push('scripts')
         <script>
             (function () {
-                const endpoint = 'http://' + window.location.hostname + ':8000/flood/history';
+                const endpoint = (window.SFMEWS_ENDPOINT?.api || ('http://' + window.location.hostname + ':8000')) + '/flood/history';
 
                 const tbody = document.getElementById('history-tbody');
                 const stateRow = document.getElementById('history-state-row');

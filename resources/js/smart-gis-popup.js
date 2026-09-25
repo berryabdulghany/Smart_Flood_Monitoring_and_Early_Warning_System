@@ -1,5 +1,9 @@
 const AI_INTERVAL_MS = 5000;
 const AI_TIMEOUT_MS = 7000;
+// Live = analisis di server (tarik HLS + YOLO). Interval lebih longgar & timeout
+// lebih panjang supaya tidak membebani VPS.
+const AI_LIVE_INTERVAL_MS = 12000;
+const AI_LIVE_TIMEOUT_MS = 15000;
 
 let elements = {};
 let activeLocation = null;
@@ -8,6 +12,11 @@ let aiTimer = null;
 let aiProcessing = false;
 let streamMode = 'offline';
 let hlsLibraryPromise = null;
+// Info "dianalisis di server" cukup sekali per popup, bukan tiap polling.
+let infoServerDitampilkan = false;
+
+// Terjemahan aman (i18n mungkin belum siap) — pakai teks cadangan bila perlu.
+const t = (key, fallback) => (window.SFMEWS_t ? window.SFMEWS_t(key) : fallback);
 
 const queryElements = () => {
     elements = {
@@ -18,6 +27,8 @@ const queryElements = () => {
         video: document.getElementById('smart-popup-video'),
         canvas: document.getElementById('smart-popup-canvas'),
         streamStatus: document.getElementById('smart-popup-stream-status'),
+        streamToggle: document.getElementById('smart-popup-stream-toggle'),
+        streamToggleLabel: document.getElementById('smart-popup-stream-toggle-label'),
         videoMessage: document.getElementById('smart-popup-video-message'),
         aiScan: document.getElementById('smart-popup-ai-scan'),
         connection: document.getElementById('smart-popup-connection'),
@@ -94,6 +105,26 @@ const setText = (element, value) => {
     window.requestAnimationFrame(() => element.classList.add('sensor-value-updated'));
 };
 
+// Pesan overlay di atas video. `sementaraMs > 0` -> otomatis memudar & hilang
+// setelah sekian ms, supaya tidak menutupi tayangan terus-menerus.
+let timerPesanVideo = null;
+const pesanVideo = (teks, sementaraMs = 0) => {
+    const el = elements.videoMessage;
+    if (!el) return;
+
+    window.clearTimeout(timerPesanVideo);
+    setText(el, teks);
+    el.classList.remove('hidden');
+    el.style.opacity = '1';
+
+    if (sementaraMs > 0) {
+        timerPesanVideo = window.setTimeout(() => {
+            el.style.opacity = '0';
+            timerPesanVideo = window.setTimeout(() => el.classList.add('hidden'), 400);
+        }, sementaraMs);
+    }
+};
+
 const setStreamStatus = (mode) => {
     streamMode = mode;
     const isLive = mode === 'live';
@@ -114,6 +145,12 @@ const setStreamStatus = (mode) => {
 
     if (elements.cctvSource) {
         elements.cctvSource.textContent = isLive ? 'Live CCTV HLS' : isFallback ? 'Fallback MP4' : 'Offline';
+    }
+
+    // Label tombol toggle: saat live -> tawarkan uji deteksi (fallback);
+    // saat fallback/offline -> tawarkan kembali ke live.
+    if (elements.streamToggleLabel) {
+        elements.streamToggleLabel.textContent = isFallback ? 'Kembali ke Live' : 'Uji Deteksi AI';
     }
 };
 
@@ -143,7 +180,7 @@ const loadFallbackVideo = () => {
 
     if (!activeLocation?.cctv_fallback_url) {
         setStreamStatus('offline');
-        setText(elements.videoMessage, 'CCTV stream offline and no fallback video is configured.');
+        pesanVideo(t('video.no-fallback', 'CCTV offline dan video cadangan belum dikonfigurasi.'));
         return;
     }
 
@@ -152,14 +189,21 @@ const loadFallbackVideo = () => {
     elements.video.muted = true;
     elements.video.load();
     setStreamStatus('fallback');
-    setText(elements.videoMessage, 'Live CCTV unavailable. Playing fallback flood simulation.');
+    pesanVideo(t('video.demo-mode', 'Mode uji deteksi: video demo — hasil hanya demonstrasi.'), 5000);
     playVideo();
+    // Fallback = video se-origin -> frame BISA di-capture -> jalankan AI demo.
+    startAiLoop();
 };
 
 const loadLiveStream = async () => {
     destroyHls();
     elements.video.removeAttribute('src');
-    elements.video.crossOrigin = 'anonymous';
+    // CATATAN: crossOrigin='anonymous' sengaja TIDAK dipasang.
+    // Server ATCS tidak mengirim header CORS, sehingga permintaan stream
+    // ditolak browser dan popup selalu jatuh ke video simulasi.
+    // Konsekuensi: frame stream live tidak bisa di-capture ke canvas
+    // (tainted canvas) -> deteksi AI dari popup dilewati dengan pesan jelas.
+    elements.video.removeAttribute('crossorigin');
     elements.video.muted = true;
     elements.video.autoplay = true;
     elements.video.playsInline = true;
@@ -173,8 +217,42 @@ const loadLiveStream = async () => {
     }
 
     setStreamStatus('live');
-    setText(elements.videoMessage, 'Connecting to Bandung live CCTV stream...');
+    pesanVideo(t('video.connecting', 'Menyambungkan ke CCTV live Bandung...'));
 
+    // PENTING: HLS NATIVE dicoba LEBIH DULU.
+    // Server ATCS tidak mengirim header CORS, sehingga hls.js (yang memakai
+    // XHR) selalu gagal dan popup jatuh ke video simulasi. Pemutaran native
+    // oleh elemen <video> TIDAK tunduk pada CORS, jadi stream berhasil.
+    // Urutan ini menyamakan perilaku popup dengan halaman CCTV Monitoring.
+    if (elements.video.canPlayType('application/vnd.apple.mpegurl')) {
+        elements.video.src = liveUrl;
+
+        let sudahLive = false;
+        const tandaiLive = () => {
+            if (sudahLive) return;
+            if (!(elements.video.currentSrc || '').includes('.m3u8')) return;
+            sudahLive = true;
+            setStreamStatus('live');
+            pesanVideo(t('video.connected', 'CCTV live tersambung.'), 2500);
+        };
+
+        elements.video.addEventListener('loadeddata', tandaiLive, { once: true });
+        playVideo();   // JANGAN panggil load() -- akan mengabort pemuatan src baru
+
+        // Fallback berbasis KESIAPAN, bukan event 'error'.
+        // removeAttribute('src') di atas sempat memicu event error palsu yang
+        // dulu langsung menjatuhkan popup ke video simulasi.
+        setTimeout(() => {
+            if (sudahLive) return;
+            const siap = elements.video.readyState >= 2
+                && (elements.video.currentSrc || '').includes('.m3u8');
+            if (siap) tandaiLive();
+            else loadFallbackVideo();
+        }, 8000);
+        return;
+    }
+
+    // Browser tanpa HLS native (mis. Chrome desktop) -> pakai hls.js.
     try {
         const Hls = await getHlsLibrary();
 
@@ -187,7 +265,7 @@ const loadLiveStream = async () => {
             hls.attachMedia(elements.video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
                 setStreamStatus('live');
-                setText(elements.videoMessage, 'Live CCTV stream connected.');
+                pesanVideo(t('video.connected', 'CCTV live tersambung.'), 2500);
                 playVideo();
             });
             hls.on(Hls.Events.ERROR, (_, data) => {
@@ -199,12 +277,6 @@ const loadLiveStream = async () => {
         }
     } catch (error) {
         console.warn('HLS.js could not be loaded:', error);
-    }
-
-    if (elements.video.canPlayType('application/vnd.apple.mpegurl')) {
-        elements.video.src = liveUrl;
-        elements.video.addEventListener('loadedmetadata', playVideo, { once: true });
-        return;
     }
 
     loadFallbackVideo();
@@ -314,9 +386,18 @@ const captureFrameBlob = () => new Promise((resolve, reject) => {
             resolve(blob);
         }, 'image/jpeg', 0.82);
     } catch (error) {
+        // Canvas "tainted": terjadi bila frame berasal dari stream live lintas
+        // domain tanpa header CORS. Bukan bug -- pembatasan keamanan browser.
+        if (error && error.name === 'SecurityError') {
+            reject(new Error('Deteksi AI tidak tersedia untuk stream live (pembatasan CORS browser). Gunakan video playback untuk uji deteksi.'));
+            return;
+        }
         reject(error);
     }
 });
+
+// Endpoint deteksi live server-side: turunan dari /detect -> /detect/live.
+const liveEndpoint = () => endpoint().replace(/\/detect\/?$/, '/detect/live');
 
 const detectFrame = async () => {
     if (!activeLocation || aiProcessing) {
@@ -326,39 +407,63 @@ const detectFrame = async () => {
     aiProcessing = true;
     elements.aiScan?.classList.remove('hidden');
 
+    const isLive = streamMode === 'live';
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+    const timeout = window.setTimeout(() => controller.abort(), isLive ? AI_LIVE_TIMEOUT_MS : AI_TIMEOUT_MS);
 
     try {
-        const blob = await captureFrameBlob();
-        const formData = new FormData();
-        const locationName = locationNameForAi();
-        formData.append('image', blob, `${activeLocation.id}-frame.jpg`);
-        formData.append('file', blob, `${activeLocation.id}-frame.jpg`);
-        formData.append('location', locationName);
-        formData.append('location_id', activeLocation.id);
+        let payload;
 
-        const response = await fetch(endpoint(), {
-            method: 'POST',
-            body: formData,
-            cache: 'no-store',
-            signal: controller.signal,
-        });
+        if (isLive) {
+            // LIVE: analisis di SERVER (CORS hanya berlaku di browser; server
+            // bebas menarik HLS). Browser hanya meminta hasil & menampilkannya.
+            const url = `${liveEndpoint()}?location_id=${encodeURIComponent(activeLocation.id)}`;
+            const response = await fetch(url, { method: 'POST', cache: 'no-store', signal: controller.signal });
+            if (!response.ok) {
+                throw new Error(`live detect ${response.status}`);
+            }
+            payload = await response.json();
+            // Info ini cukup diberitahukan SEKALI per popup (bukan tiap polling),
+            // dan hanya sebentar — status AI sesungguhnya ada di panel kanan.
+            if (!infoServerDitampilkan) {
+                infoServerDitampilkan = true;
+                pesanVideo(t('video.analyzed-server', 'CCTV live — dianalisis di server (YOLO).'), 4000);
+            }
+        } else {
+            // FALLBACK: video se-origin -> browser boleh capture frame. Ditandai
+            // simulasi supaya tidak tersimpan / tidak memengaruhi keputusan.
+            const blob = await captureFrameBlob();
+            const formData = new FormData();
+            const locationName = locationNameForAi();
+            formData.append('image', blob, `${activeLocation.id}-frame.jpg`);
+            formData.append('file', blob, `${activeLocation.id}-frame.jpg`);
+            formData.append('location', locationName);
+            formData.append('location_id', activeLocation.id);
+            formData.append('simulasi', '1');
 
-        if (!response.ok) {
-            throw new Error(`AI endpoint responded with ${response.status}`);
+            const response = await fetch(endpoint(), {
+                method: 'POST',
+                body: formData,
+                cache: 'no-store',
+                signal: controller.signal,
+            });
+            if (!response.ok) {
+                throw new Error(`AI endpoint responded with ${response.status}`);
+            }
+            payload = await response.json();
         }
 
-        setAiResult(normalizeDetection(await response.json()));
+        setAiResult(normalizeDetection(payload));
     } catch (error) {
+        // Live: jangan hentikan loop -- server mungkin sedang membuka stream,
+        // coba lagi pada tick berikutnya.
         if (streamMode === 'live') {
-            setText(elements.videoMessage, 'Live stream cannot be analyzed in browser. Switching to fallback simulation.');
-            loadFallbackVideo();
+            pesanVideo(t('video.awaiting-ai', 'Menunggu analisis AI dari server...'), 4000);
         }
 
         if (elements.aiStatusPill) {
             elements.aiStatusPill.className = 'rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700';
-            elements.aiStatusPill.textContent = 'AI Offline';
+            elements.aiStatusPill.textContent = 'AI ...';
         }
 
         console.warn('Smart GIS AI detection failed:', error);
@@ -372,7 +477,9 @@ const detectFrame = async () => {
 const startAiLoop = () => {
     window.clearInterval(aiTimer);
     detectFrame();
-    aiTimer = window.setInterval(detectFrame, AI_INTERVAL_MS);
+    // Live memakai interval lebih longgar (server tarik HLS + YOLO ~3-4 dtk).
+    const interval = streamMode === 'live' ? AI_LIVE_INTERVAL_MS : AI_INTERVAL_MS;
+    aiTimer = window.setInterval(detectFrame, interval);
 };
 
 const stopAiLoop = () => {
@@ -383,6 +490,7 @@ const stopAiLoop = () => {
 
 const openPopup = (location) => {
     activeLocation = location;
+    infoServerDitampilkan = false;   // info server ditampilkan lagi utk sesi baru
     elements.modal.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
 
@@ -413,6 +521,8 @@ const openPopup = (location) => {
 const closePopup = () => {
     elements.modal.classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
+    window.clearTimeout(timerPesanVideo);
+    elements.aiScan?.classList.add('hidden');
     stopAiLoop();
     destroyHls();
     elements.video?.pause();
@@ -439,17 +549,38 @@ const initSmartGisPopup = () => {
     }
 
     elements.close?.addEventListener('click', closePopup);
+    // Toggle Live <-> Fallback: fallback (video se-origin) memungkinkan uji
+    // deteksi YOLO dari browser; live tak bisa (CORS).
+    elements.streamToggle?.addEventListener('click', () => {
+        if (!activeLocation) {
+            return;
+        }
+        if (streamMode === 'fallback') {
+            stopAiLoop();
+            loadLiveStream();
+            startAiLoop(); // percobaan live akan berhenti sendiri bila kena CORS
+        } else {
+            stopAiLoop();
+            loadFallbackVideo(); // sudah memanggil startAiLoop di dalamnya
+        }
+    });
     elements.modal?.addEventListener('click', (event) => {
         if (event.target === elements.modal) {
             closePopup();
         }
     });
     elements.video?.addEventListener('error', () => {
+        // Abaikan error palsu yang muncul saat berganti sumber
+        // (removeAttribute('src') sempat memicu ini) selama video
+        // sebenarnya sudah punya data siap putar.
+        if (elements.video.readyState >= 2) {
+            return;
+        }
         if (streamMode !== 'fallback') {
             loadFallbackVideo();
         } else {
             setStreamStatus('offline');
-            setText(elements.videoMessage, 'Fallback video cannot be loaded.');
+            pesanVideo(t('video.fallback-error', 'Video cadangan tidak dapat dimuat.'));
         }
     });
     document.addEventListener('keydown', (event) => {

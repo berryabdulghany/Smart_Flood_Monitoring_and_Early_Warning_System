@@ -9,24 +9,24 @@
             <section class="dashboard-card overflow-hidden">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
                     <div>
-                        <h2 class="text-xl font-bold text-slate-950">Realtime Flood GIS Monitoring</h2>
-                        <p class="text-sm font-medium text-slate-500">Large-screen spatial intelligence for Bandung flood monitoring points.</p>
+                        <h2 class="text-xl font-bold text-slate-950" data-i18n="map.realtime-title">Realtime Flood GIS Monitoring</h2>
+                        <p class="text-sm font-medium text-slate-500" data-i18n="map.realtime-sub">Large-screen spatial intelligence for Bandung flood monitoring points.</p>
                     </div>
                     <div class="flex flex-wrap gap-2 text-xs font-bold">
-                        <span class="legend-dot text-emerald-500">Aman</span>
-                        <span class="legend-dot text-amber-500">Waspada</span>
-                        <span class="legend-dot text-red-500">Banjir</span>
+                        <span class="legend-dot text-emerald-500" data-i18n="flood.safe">Aman</span>
+                        <span class="legend-dot text-amber-500" data-i18n="flood.warning">Waspada</span>
+                        <span class="legend-dot text-red-500" data-i18n="flood.danger">Banjir</span>
                     </div>
                 </div>
                 <div class="relative h-[calc(100vh-180px)] min-h-[560px]">
                     <div id="flood-map" class="h-full w-full"></div>
                     <div class="absolute left-4 top-4 z-[400] grid gap-2 rounded-2xl border border-white/80 bg-white/[0.88] p-3 shadow-xl backdrop-blur">
-                        <p class="text-xs font-bold uppercase tracking-wide text-cyan-600">GIS Command Overlay</p>
-                        <p class="text-sm font-bold text-slate-950">3 monitoring points active</p>
+                        <p class="text-xs font-bold uppercase tracking-wide text-cyan-600" data-i18n="map.overlay">GIS Command Overlay</p>
+                        <p class="text-sm font-bold text-slate-950" data-i18n="map.points-active">3 monitoring points active</p>
                     </div>
                     <div class="absolute bottom-4 right-4 z-[400] hidden w-72 rounded-2xl border border-white/80 bg-white/[0.88] p-4 shadow-xl backdrop-blur md:block">
-                        <p class="text-sm font-bold text-slate-950">Priority Response</p>
-                        <p class="mt-1 text-xs font-medium text-slate-500">Pasir Koja berada pada status banjir aktif dengan confidence AI 94%.</p>
+                        <p class="text-sm font-bold text-slate-950" data-i18n="map.priority">Priority Response</p>
+                        <p id="gis-priority-text" class="mt-1 text-xs font-medium text-slate-500">Memuat status titik pantau...</p>
                     </div>
                 </div>
             </section>
@@ -37,8 +37,8 @@
         <script>
             window.SFMEWS = {!! Illuminate\Support\Js::from([
                 'locations' => $locations,
-                'sensorEndpoint' => 'http://' . request()->getHost() . ':8000/sensor/latest',
-                'aiEndpoint' => 'http://' . request()->getHost() . ':5000/detect',
+                'sensorEndpoint' => (config('sfmews.api_public_url') ?: 'http://' . request()->getHost() . ':8000') . '/sensor/latest',
+                'aiEndpoint' => (config('sfmews.ai_public_url') ?: 'http://' . request()->getHost() . ':5000') . '/detect',
                 'weatherEndpoint' => route('api.weather.realtime'),
             ]) !!};
         </script>

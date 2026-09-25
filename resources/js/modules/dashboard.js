@@ -31,6 +31,25 @@ const statusColors = {
     danger: '#ef4444',
 };
 
+// Isi tooltip hover marker: nama titik + status + level air.
+// Supaya user tahu titik itu lokasi apa tanpa harus klik.
+const markerTooltip = (location) => {
+    const label = location.status_label || 'Aman';
+    const color = location.status_color || statusColors.safe;
+    const water = location.water_level ?? '-';
+    return `
+        <div class="flood-tip">
+            <p class="flood-tip-name">${location.short_name || location.name}</p>
+            <p class="flood-tip-sub">${location.district || ''}</p>
+            <p class="flood-tip-row">
+                <span class="flood-tip-dot" style="background:${color}"></span>
+                <span class="flood-tip-status" style="color:${color}">${label}</span>
+                <span class="flood-tip-water">Air ${water} cm</span>
+            </p>
+            <p class="flood-tip-hint">Klik untuk detail</p>
+        </div>`;
+};
+
 const weatherLabel = (location, key, fallback = '-') => location.realtimeWeather?.[key] ?? fallback;
 
 const popupTemplate = (location) => `
@@ -127,6 +146,12 @@ const initMap = () => {
 
         const marker = window.L.marker([location.lat, location.lng], { icon })
             .addTo(map)
+            .bindTooltip(markerTooltip(location), {
+                direction: 'top',
+                offset: [0, -20],
+                opacity: 1,
+                className: 'flood-tooltip',
+            })
             .on('click', () => {
                 window.dispatchEvent(new CustomEvent('sfmews:open-smart-popup', {
                     detail: { location },
@@ -177,6 +202,9 @@ const updateMapDecisionMarkers = (decisions = []) => {
             location.status = decision.status;
             location.status_label = decision.label;
             location.status_color = color;
+            if (decision.waterLevel != null) {
+                location.water_level = decision.waterLevel;
+            }
         }
 
         if (!marker || !window.L) {
@@ -190,7 +218,36 @@ const updateMapDecisionMarkers = (decisions = []) => {
             iconAnchor: [21, 21],
             popupAnchor: [0, -18],
         }));
+
+        // Sinkronkan isi tooltip dengan status terbaru.
+        if (location) {
+            marker.setTooltipContent(markerTooltip(location));
+        }
     });
+
+    updatePriorityBox(locations);
+};
+
+// Perbarui overlay "Priority Response" di halaman Flood Map GIS dengan
+// lokasi paling parah saat ini (bukan teks dummy hardcoded).
+const updatePriorityBox = (locations) => {
+    const box = document.getElementById('gis-priority-text');
+    if (!box) {
+        return;
+    }
+
+    const rank = { danger: 3, warning: 2, safe: 1 };
+    const worst = locations.reduce((acc, loc) => (
+        (rank[loc.status] || 0) > (rank[acc?.status] || 0) ? loc : acc
+    ), null);
+
+    if (!worst || worst.status === 'safe') {
+        box.textContent = 'Semua titik pantau dalam kondisi AMAN. Tidak ada peringatan aktif.';
+        return;
+    }
+
+    const label = worst.status_label || (worst.status === 'danger' ? 'Banjir' : 'Waspada');
+    box.textContent = `${worst.short_name || worst.name} berstatus ${label} (air ${worst.water_level ?? '-'} cm). Prioritaskan respons di titik ini.`;
 };
 
 const initFloodDecisionMapUpdates = () => {

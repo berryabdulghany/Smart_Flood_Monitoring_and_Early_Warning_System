@@ -1,37 +1,43 @@
-const DEFAULT_LOCATIONS = () => window.SFMEWS?.locations || [];
+// ================================================================
+// FLOOD DECISION — v2 (SATU SUMBER KEBENARAN)
+// ================================================================
+// Perubahan penting: modul ini TIDAK LAGI menghitung status sendiri.
+// Seluruh keputusan diambil dari backend `/flood/status` agar aturan
+// (ambang AI 0.40, WMO, Permen PU, hysteresis) hanya ada di SATU tempat.
+// Menghitung ulang di sini pernah membuat dashboard beda dengan backend.
+// ================================================================
+
+const REFRESH_MS = 5000;
 
 const STATUS_META = {
     safe: {
         label: 'AMAN',
-        message: 'Seluruh indikator berada dalam kondisi aman.',
         icon: 'shield-check',
         classes: {
-            card: ['border-emerald-200', 'bg-emerald-50'],
+            // Card TIDAK diberi tint background — cukup aksen border, supaya
+            // yang berwarna hanya badge/dot/ikon status (card tetap putih).
+            card: ['border-emerald-200'],
             badge: ['bg-emerald-100', 'text-emerald-700', 'ring-emerald-200'],
             dot: ['bg-emerald-500'],
-            text: ['text-emerald-700'],
         },
     },
     warning: {
         label: 'WASPADA',
-        message: 'Terdapat indikator awal peningkatan risiko banjir.',
         icon: 'triangle-alert',
         classes: {
-            card: ['border-amber-200', 'bg-amber-50'],
+            card: ['border-amber-200'],
             badge: ['bg-amber-100', 'text-amber-700', 'ring-amber-200'],
             dot: ['bg-amber-500'],
-            text: ['text-amber-700'],
         },
     },
     danger: {
         label: 'BANJIR',
-        message: 'Kondisi memenuhi aturan banjir. Perlu tindakan cepat.',
         icon: 'siren',
         classes: {
-            card: ['border-red-200', 'bg-red-50', 'flood-warning-pulse'],
+            // Banjir tetap pakai pulse sbg penanda darurat (tanpa tint penuh).
+            card: ['border-red-200', 'flood-warning-pulse'],
             badge: ['bg-red-100', 'text-red-700', 'ring-red-200'],
             dot: ['bg-red-500', 'animate-pulse'],
-            text: ['text-red-700'],
         },
     },
 };
@@ -43,169 +49,125 @@ const RESET_CLASSES = [
     'bg-amber-100', 'text-amber-700', 'ring-amber-200',
     'bg-red-100', 'text-red-700', 'ring-red-200',
     'bg-emerald-500', 'bg-amber-500', 'bg-red-500', 'animate-pulse',
+    // Default abu-abu badge/dot/ikon WAJIB ikut di-reset — kalau tidak, di Tailwind
+    // v4 kelas slate menang atas warna status sehingga badge/dot tetap abu.
+    // CATATAN: 'bg-white' & 'border-slate-200' (milik CARD) SENGAJA tidak di-reset,
+    // supaya card tetap putih/netral — hanya badge/dot/ikon yang berwarna status.
+    'bg-slate-100', 'text-slate-600', 'ring-slate-200', 'bg-slate-400',
+    'bg-slate-50', 'text-slate-500', 'ring-slate-100',
 ];
 
-let state = {
-    locations: {},
-    latestSensor: null,
-    latestWeather: null,
-    latestAi: {},
+// Alamat API: pakai konfigurasi server bila ada (dev lokal), selain itu
+// pakai host halaman ini (produksi).
+const apiBase = () => window.SFMEWS_ENDPOINT?.api || ('http://' + window.location.hostname + ':8000');
+
+let nodeStatus = {};   // lokasi -> {online, last_seen_at}
+
+// ============ UTIL ============
+const angka = (v, f = 0) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : f;
 };
 
-const toNumber = (value, fallback = 0) => {
-    const numeric = Number(value);
-
-    return Number.isFinite(numeric) ? numeric : fallback;
-};
-
-const timestamp = (value = new Date()) => {
-    const date = value ? new Date(value) : new Date();
-
-    if (Number.isNaN(date.getTime())) {
-        return 'Tidak tersedia';
-    }
-
+const jamWib = (iso) => {
+    if (!iso) return 'Tidak tersedia';
+    const hasTz = /[zZ]$/.test(iso) || /[+-]\d\d:?\d\d$/.test(iso);
+    const d = new Date(hasTz ? iso : iso + 'Z');
+    if (isNaN(d)) return 'Tidak tersedia';
     return new Intl.DateTimeFormat('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        timeZone: 'Asia/Jakarta',
-    }).format(date) + ' WIB';
+        hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta',
+    }).format(d) + ' WIB';
 };
 
-const getLocationFallback = (locationId) => state.locations[locationId] || {};
+const resetClassList = (el) => el?.classList.remove(...RESET_CLASSES);
 
-const normalizeAi = (payload = {}) => ({
-    status: String(payload.status || 'TIDAK BANJIR').toUpperCase().includes('BANJIR')
-        && !String(payload.status || '').toUpperCase().includes('TIDAK')
-        ? 'BANJIR'
-        : 'TIDAK BANJIR',
-    confidence: toNumber(payload.confidence, 0),
-});
+const setText = (el, value) => {
+    if (!el || el.textContent === value) return;
+    el.textContent = value;
+    el.classList.remove('sensor-value-updated');
+    window.requestAnimationFrame(() => el.classList.add('sensor-value-updated'));
+};
 
-export const decideFloodStatus = ({
-    waterLevel = 0,
-    rainfall = 0,
-    aiConfidence = 0,
-} = {}) => {
-    const level = toNumber(waterLevel);
-    const rain = toNumber(rainfall);
-    const confidence = toNumber(aiConfidence);
-
-    if ((level >= 15 && confidence >= 70) || (level >= 15 && rain > 3)) {
-        return {
-            status: 'danger',
-            reason: 'Level air tinggi dan indikator AI/cuaca memperkuat kondisi banjir.',
-        };
-    }
-
-    if ((level >= 6 && level <= 14) || rain > 0 || confidence >= 50) {
-        return {
-            status: 'warning',
-            reason: 'Salah satu indikator masuk batas waspada.',
-        };
-    }
-
+// ============ MAP RESPON BACKEND -> BENTUK YANG DIPAKAI UI ============
+function petakan(row) {
+    const status = STATUS_META[row.status] ? row.status : 'safe';
     return {
-        status: 'safe',
-        reason: 'Level air, curah hujan, dan AI berada di bawah ambang risiko.',
+        locationId: row.lokasi,
+        status,
+        label: STATUS_META[status].label,
+        reason: row.reason || '',
+        message: row.reason || '',
+        waterLevel: angka(row.level_air),
+        rainfall: angka(row.curah_hujan_per_jam),
+        rainClass: row.kategori_hujan_label || '-',
+        rainValid: row.hujan_valid !== false,
+        aiConfidence: Math.round(angka(row.ai_confidence) * 100),
+        aiStatus: row.ai_status,
+        aiAvailable: row.ai_tersedia !== false,
+        aiConfirmed: row.ai_terkonfirmasi === true,
+        updatedAt: jamWib(row.timestamp),
     };
-};
+}
 
-const buildDecision = (locationId) => {
-    const fallback = getLocationFallback(locationId);
-    const sensor = state.latestSensor || {};
-    const weather = state.latestWeather?.points?.[locationId]?.weather || {};
-    const ai = state.latestAi[locationId] || {
-        confidence: fallback.ai_confidence,
-        status: fallback.status === 'danger' ? 'BANJIR' : 'TIDAK BANJIR',
-    };
-
-    const waterLevel = toNumber(sensor.level_air ?? fallback.water_level);
-    const rainfall = toNumber(sensor.curah_hujan ?? weather.rainfall ?? fallback.rainfall);
-    const aiConfidence = toNumber(ai.confidence);
-    const decision = decideFloodStatus({ waterLevel, rainfall, aiConfidence });
-
-    return {
-        locationId,
-        status: decision.status,
-        label: STATUS_META[decision.status].label,
-        message: STATUS_META[decision.status].message,
-        reason: decision.reason,
-        waterLevel,
-        rainfall,
-        aiStatus: ai.status,
-        aiConfidence,
-        weatherCondition: weather.condition || fallback.weather || 'Tidak tersedia',
-        updatedAt: timestamp(sensor.created_at || new Date()),
-    };
-};
-
-const resetClassList = (element) => {
-    element?.classList.remove(...RESET_CLASSES);
-};
-
-const setText = (element, value) => {
-    if (!element || element.textContent === value) {
-        return;
-    }
-
-    element.textContent = value;
-    element.classList.remove('sensor-value-updated');
-    window.requestAnimationFrame(() => element.classList.add('sensor-value-updated'));
-};
-
-const applySummaryCard = (card, decision) => {
-    const meta = STATUS_META[decision.status];
+// ============ TERAPKAN KE KARTU PANEL ============
+function applySummaryCard(card, d) {
+    const meta = STATUS_META[d.status];
     const badge = card.querySelector('[data-flood-status-badge]');
     const dot = card.querySelector('[data-flood-status-dot]');
     const icon = card.querySelector('[data-flood-status-icon]');
-    const label = card.querySelector('[data-flood-status-label]');
-    const reason = card.querySelector('[data-flood-status-reason]');
-    const water = card.querySelector('[data-flood-water]');
-    const rain = card.querySelector('[data-flood-rain]');
-    const ai = card.querySelector('[data-flood-ai]');
-    const updated = card.querySelector('[data-flood-updated]');
 
     resetClassList(card);
     resetClassList(badge);
     resetClassList(dot);
+    resetClassList(icon);
     card.classList.add(...meta.classes.card);
     badge?.classList.add(...meta.classes.badge);
     dot?.classList.add(...meta.classes.dot);
+    icon?.classList.add(...meta.classes.badge);
 
-    if (icon) {
-        icon.innerHTML = `<i data-lucide="${meta.icon}" class="h-5 w-5"></i>`;
+    if (icon) icon.innerHTML = `<i data-lucide="${meta.icon}" class="h-5 w-5"></i>`;
+
+    setText(card.querySelector('[data-flood-status-label]'), d.label);
+    setText(card.querySelector('[data-flood-status-reason]'), d.reason);
+    setText(card.querySelector('[data-flood-water]'), `${d.waterLevel} cm`);
+    // 7.2 briefing: tampilkan INTENSITAS + kelas WMO, bukan akumulasi
+    setText(card.querySelector('[data-flood-rain]'),
+        d.rainValid ? `${d.rainfall} mm/j` : 'belum valid');
+    setText(card.querySelector('[data-flood-rain-class]'), d.rainClass);
+    setText(card.querySelector('[data-flood-ai]'),
+        d.aiAvailable ? `${d.aiConfidence}%` : 'n/a');
+    setText(card.querySelector('[data-flood-updated]'), d.updatedAt);
+
+    // 7.3 briefing: indikator node online/offline
+    const nodeEl = card.querySelector('[data-node-status]');
+    if (nodeEl) {
+        const st = nodeStatus[d.locationId];
+        const online = st && st.online;
+        const tr = window.SFMEWS_t;
+        nodeEl.textContent = online
+            ? (tr ? tr('node.online') : 'Node online')
+            : (tr ? tr('node.offline') : 'Node offline');
+        nodeEl.classList.toggle('text-emerald-600', !!online);
+        nodeEl.classList.toggle('text-red-500', !online);
     }
+}
 
-    setText(label, decision.label);
-    setText(reason, decision.reason);
-    setText(water, `${decision.waterLevel} cm`);
-    setText(rain, `${decision.rainfall} mm`);
-    setText(ai, `${decision.aiConfidence}%`);
-    setText(updated, decision.updatedAt);
-};
-
-const applyCounters = (decisions) => {
-    const count = {
-        safe: decisions.filter((item) => item.status === 'safe').length,
-        warning: decisions.filter((item) => item.status === 'warning').length,
-        danger: decisions.filter((item) => item.status === 'danger').length,
+function applyCounters(list) {
+    const c = {
+        safe: list.filter((x) => x.status === 'safe').length,
+        warning: list.filter((x) => x.status === 'warning').length,
+        danger: list.filter((x) => x.status === 'danger').length,
     };
+    document.querySelectorAll('[data-flood-count-safe]').forEach((e) => setText(e, String(c.safe)));
+    document.querySelectorAll('[data-flood-count-warning]').forEach((e) => setText(e, String(c.warning)));
+    document.querySelectorAll('[data-flood-count-danger]').forEach((e) => setText(e, String(c.danger)));
+}
 
-    document.querySelectorAll('[data-flood-count-safe]').forEach((element) => setText(element, String(count.safe)));
-    document.querySelectorAll('[data-flood-count-warning]').forEach((element) => setText(element, String(count.warning)));
-    document.querySelectorAll('[data-flood-count-danger]').forEach((element) => setText(element, String(count.danger)));
-};
-
-const applyPopupDecision = (decision) => {
+function applyPopupDecision(d) {
     const card = document.getElementById('smart-popup-flood-decision');
+    if (!card || card.dataset.locationId !== d.locationId) return;
 
-    if (!card || card.dataset.locationId !== decision.locationId) {
-        return;
-    }
-
-    const meta = STATUS_META[decision.status];
+    const meta = STATUS_META[d.status];
     const badge = document.getElementById('smart-popup-flood-badge');
     const dot = document.getElementById('smart-popup-flood-dot');
 
@@ -216,99 +178,83 @@ const applyPopupDecision = (decision) => {
     badge?.classList.add(...meta.classes.badge);
     dot?.classList.add(...meta.classes.dot);
 
-    setText(document.getElementById('smart-popup-flood-label'), decision.label);
-    setText(document.getElementById('smart-popup-flood-message'), decision.reason);
-    setText(document.getElementById('smart-popup-flood-water'), `${decision.waterLevel} cm`);
-    setText(document.getElementById('smart-popup-flood-rain'), `${decision.rainfall} mm`);
-    setText(document.getElementById('smart-popup-flood-ai'), `${decision.aiConfidence}%`);
-    setText(document.getElementById('smart-popup-flood-updated'), decision.updatedAt);
-};
+    setText(document.getElementById('smart-popup-flood-label'), d.label);
+    setText(document.getElementById('smart-popup-flood-message'), d.reason);
+    setText(document.getElementById('smart-popup-flood-water'), `${d.waterLevel} cm`);
+    setText(document.getElementById('smart-popup-flood-rain'), d.rainValid ? `${d.rainfall} mm/j` : 'belum valid');
+    setText(document.getElementById('smart-popup-flood-ai'), d.aiAvailable ? `${d.aiConfidence}%` : 'n/a');
+    setText(document.getElementById('smart-popup-flood-updated'), d.updatedAt);
+}
 
-const applyDecisions = () => {
-    const decisions = Object.keys(state.locations).map(buildDecision);
-
+function terapkan(decisions) {
     document.querySelectorAll('[data-flood-location-id]').forEach((card) => {
-        const decision = decisions.find((item) => item.locationId === card.dataset.floodLocationId);
-
-        if (decision) {
-            applySummaryCard(card, decision);
-        }
+        const d = decisions.find((x) => x.locationId === card.dataset.floodLocationId);
+        if (d) applySummaryCard(card, d);
     });
 
     applyCounters(decisions);
-
-    decisions.forEach((decision) => {
-        applyPopupDecision(decision);
-    });
+    decisions.forEach(applyPopupDecision);
 
     window.SFMEWS = window.SFMEWS || {};
-    window.SFMEWS.floodDecisions = decisions.reduce((carry, item) => ({
-        ...carry,
-        [item.locationId]: item,
-    }), {});
+    window.SFMEWS.floodDecisions = decisions.reduce((a, x) => ({ ...a, [x.locationId]: x }), {});
 
-    window.dispatchEvent(new CustomEvent('sfmews:flood-decision-updated', {
-        detail: { decisions },
-    }));
+    // event ini dipakai modul lain (geofence-alert.js) -- bentuknya dipertahankan
+    window.dispatchEvent(new CustomEvent('sfmews:flood-decision-updated', { detail: { decisions } }));
 
     window.lucide?.createIcons();
-};
+}
 
-const initState = () => {
-    state.locations = DEFAULT_LOCATIONS().reduce((carry, location) => ({
-        ...carry,
-        [location.id]: location,
-    }), {});
-    state.latestSensor = window.SFMEWS?.latestSensor || null;
-    state.latestWeather = window.SFMEWS?.latestWeather || null;
-};
+// ============ AMBIL DATA ============
+async function muatStatusNode() {
+    try {
+        const res = await fetch(`${apiBase()}/nodes/status`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        nodeStatus = (json.data || []).reduce((a, n) => ({ ...a, [n.lokasi]: n }), {});
+    } catch (e) { /* diamkan */ }
+}
 
-const initFloodDecision = () => {
-    initState();
+async function muatKeputusan() {
+    try {
+        const res = await fetch(`${apiBase()}/flood/status`, { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        const decisions = (json.data || []).map(petakan);
+        if (decisions.length) terapkan(decisions);
+    } catch (e) {
+        console.error('[flood-decision] gagal ambil /flood/status', e);
+    }
+}
 
-    if (!Object.keys(state.locations).length) {
-        return;
+async function refresh() {
+    await muatStatusNode();
+    await muatKeputusan();
+}
+
+// ============ INIT ============
+function init() {
+    // Jalankan jika ada panel keputusan ATAU ada peta GIS (#flood-map).
+    // Halaman Flood Map GIS tidak punya kartu panel, tapi marker peta tetap
+    // butuh status ASLI dari /flood/status -- tanpa ini marker menampilkan
+    // warna seed dummy dari server dan tidak pernah ter-update.
+    if (!document.querySelector('[data-flood-location-id]') &&
+        !document.querySelector('[data-flood-count-safe]') &&
+        !document.getElementById('flood-map')) {
+        return; // halaman tanpa panel keputusan & tanpa peta
     }
 
-    applyDecisions();
+    refresh();
+    setInterval(refresh, REFRESH_MS);
 
-    window.addEventListener('sfmews:sensor-updated', (event) => {
-        state.latestSensor = event.detail;
-        applyDecisions();
+    // popup GIS dibuka -> segarkan tampilan popup dari data terakhir
+    window.addEventListener('sfmews:smart-popup-opened', () => {
+        const map = window.SFMEWS?.floodDecisions || {};
+        Object.values(map).forEach(applyPopupDecision);
     });
-
-    window.addEventListener('sfmews:weather-updated', (event) => {
-        state.latestWeather = event.detail;
-        applyDecisions();
-    });
-
-    window.addEventListener('sfmews:ai-detection-updated', (event) => {
-        const locationId = event.detail?.locationId;
-        const aiResult = normalizeAi(event.detail);
-
-        if (locationId && state.locations[locationId]) {
-            state.latestAi[locationId] = aiResult;
-        } else {
-            Object.keys(state.locations).forEach((id) => {
-                state.latestAi[id] = aiResult;
-            });
-        }
-
-        applyDecisions();
-    });
-
-    window.addEventListener('sfmews:smart-popup-opened', (event) => {
-        const locationId = event.detail?.location?.id;
-        const decision = locationId ? buildDecision(locationId) : null;
-
-        if (decision) {
-            applyPopupDecision(decision);
-        }
-    });
-};
+}
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initFloodDecision);
+    document.addEventListener('DOMContentLoaded', init);
 } else {
-    initFloodDecision();
+    init();
 }

@@ -78,7 +78,18 @@ const clearLoadingState = () => {
     valueElements().forEach((element) => element.classList.remove('sensor-value-loading'));
 };
 
-const setConnectionStatus = (isOnline) => {
+// Node dianggap online hanya bila data terakhir <= 10 menit (samakan dgn
+// NODE_ONLINE_MENIT backend). Sekadar "API merespons" tidak cukup — sensor
+// bisa mati tapi API tetap mengembalikan pembacaan lama.
+const NODE_ONLINE_MS = 10 * 60 * 1000;
+const isFresh = (iso) => {
+    if (!iso) return false;
+    const hasTz = /[zZ]$/.test(iso) || /[+-]\d\d:?\d\d$/.test(iso);
+    const t = new Date(hasTz ? iso : iso + 'Z').getTime();
+    return Number.isFinite(t) && (Date.now() - t) <= NODE_ONLINE_MS;
+};
+
+const setConnectionStatus = (isOnline, showError = !isOnline) => {
     sensorElements.statusPill?.classList.toggle('bg-slate-100', false);
     sensorElements.statusPill?.classList.toggle('text-slate-600', false);
     sensorElements.statusPill?.classList.toggle('ring-slate-200', false);
@@ -95,10 +106,13 @@ const setConnectionStatus = (isOnline) => {
     sensorElements.statusIndicator?.classList.toggle('animate-pulse', isOnline);
 
     if (sensorElements.statusLabel) {
-        sensorElements.statusLabel.textContent = isOnline ? 'Online' : 'Offline';
+        const tr = window.SFMEWS_t;
+        sensorElements.statusLabel.textContent = isOnline
+            ? (tr ? tr('status.online') : 'Online')
+            : (tr ? tr('status.offline') : 'Offline');
     }
 
-    sensorElements.error?.classList.toggle('hidden', isOnline);
+    sensorElements.error?.classList.toggle('hidden', !showError);
 };
 
 const updateValue = (element, value) => {
@@ -145,7 +159,9 @@ const fetchLatestSensor = async () => {
         window.SFMEWS = window.SFMEWS || {};
         window.SFMEWS.latestSensor = payload;
         updateSensorCards(payload);
-        setConnectionStatus(true);
+        // API merespons; node online HANYA bila pembacaan terakhir masih segar.
+        // API tetap "up" -> jangan tampilkan error server saat sekadar node mati.
+        setConnectionStatus(isFresh(payload.created_at), false);
 
         window.dispatchEvent(new CustomEvent('sfmews:sensor-updated', {
             detail: payload,

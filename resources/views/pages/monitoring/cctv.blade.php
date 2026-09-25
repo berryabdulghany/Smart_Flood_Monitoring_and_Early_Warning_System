@@ -36,11 +36,11 @@
 
                         <div class="grid grid-cols-2 gap-3 p-4">
                             <div class="rounded-xl bg-slate-50 p-3">
-                                <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">AI Confidence</p>
+                                <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500" data-i18n="ai.confidence-full">AI Confidence</p>
                                 <p class="mt-1 text-xl font-bold text-slate-950"><span data-cctv-ai-conf>—</span></p>
                             </div>
                             <div class="rounded-xl bg-slate-50 p-3">
-                                <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">Deteksi Terakhir</p>
+                                <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500" data-i18n="ai.last-detection">Deteksi Terakhir</p>
                                 <p class="mt-1 text-sm font-bold text-slate-950"><span data-cctv-ai-time>—</span></p>
                             </div>
                         </div>
@@ -48,7 +48,7 @@
                 @endforeach
             </div>
 
-            <p class="mt-4 text-xs font-medium text-slate-400">
+            <p class="mt-4 text-xs font-medium text-slate-400" data-i18n="cctv.note">
                 Sumber CCTV: Kota Bandung (pelindung.bandung.go.id). Bila stream live tidak tersedia/terblokir, sistem otomatis memutar video simulasi banjir.
                 Status AI diperbarui dari deteksi YOLOv8 terbaru per lokasi.
             </p>

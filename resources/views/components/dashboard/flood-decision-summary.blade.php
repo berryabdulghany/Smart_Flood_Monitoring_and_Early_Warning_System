@@ -3,14 +3,14 @@
 <section class="dashboard-card p-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <p class="text-xs font-bold uppercase tracking-wide text-cyan-600">Rule-Based Early Warning</p>
-            <h2 class="text-lg font-bold text-slate-950">Flood Decision System</h2>
-            <p class="text-sm font-medium text-slate-500">Status realtime dihitung dari level air, curah hujan, AI CCTV, dan cuaca.</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-cyan-600" data-i18n="flood.subtitle">Rule-Based Early Warning</p>
+            <h2 class="text-lg font-bold text-slate-950" data-i18n="flood.title">Flood Decision System</h2>
+            <p class="text-sm font-medium text-slate-500" data-i18n="flood.summary-sub">Status realtime dihitung dari level air, curah hujan, AI CCTV, dan cuaca.</p>
         </div>
         <div class="flex flex-wrap gap-2 text-xs font-bold">
-            <span class="soft-badge bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">AMAN: <span data-flood-count-safe>-</span></span>
-            <span class="soft-badge bg-amber-50 text-amber-700 ring-1 ring-amber-100">WASPADA: <span data-flood-count-warning>-</span></span>
-            <span class="soft-badge bg-red-50 text-red-700 ring-1 ring-red-100">BANJIR: <span data-flood-count-danger>-</span></span>
+            <span class="soft-badge bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"><span data-i18n="flood.safe">AMAN</span>: <span data-flood-count-safe>-</span></span>
+            <span class="soft-badge bg-amber-50 text-amber-700 ring-1 ring-amber-100"><span data-i18n="flood.warning">WASPADA</span>: <span data-flood-count-warning>-</span></span>
+            <span class="soft-badge bg-red-50 text-red-700 ring-1 ring-red-100"><span data-i18n="flood.danger">BANJIR</span>: <span data-flood-count-danger>-</span></span>
         </div>
     </div>
 
@@ -35,7 +35,7 @@
                         <span data-flood-status-dot class="h-2.5 w-2.5 rounded-full bg-slate-400"></span>
                         <span data-flood-status-label>ANALYZING</span>
                     </span>
-                    <span class="text-xs font-bold text-slate-500">Updated <span data-flood-updated>-</span></span>
+                    <span class="text-xs font-bold text-slate-500"><span data-i18n="common.updated">Updated</span> <span data-flood-updated>-</span></span>
                 </div>
 
                 <p data-flood-status-reason class="mt-3 min-h-10 text-sm font-semibold leading-5 text-slate-600">
@@ -44,15 +44,15 @@
 
                 <div class="mt-4 grid grid-cols-3 gap-2 text-xs">
                     <div class="rounded-xl bg-white/70 p-3 ring-1 ring-slate-200">
-                        <p class="font-bold uppercase text-slate-500">Water</p>
+                        <p class="font-bold uppercase text-slate-500" data-i18n="label.water">Water</p>
                         <p data-flood-water class="mt-1 font-extrabold text-slate-950">-</p>
                     </div>
                     <div class="rounded-xl bg-white/70 p-3 ring-1 ring-slate-200">
-                        <p class="font-bold uppercase text-slate-500">Rain</p>
+                        <p class="font-bold uppercase text-slate-500" data-i18n="label.rain">Rain</p>
                         <p data-flood-rain class="mt-1 font-extrabold text-slate-950">-</p>
                     </div>
                     <div class="rounded-xl bg-white/70 p-3 ring-1 ring-slate-200">
-                        <p class="font-bold uppercase text-slate-500">AI</p>
+                        <p class="font-bold uppercase text-slate-500" data-i18n="label.ai">AI</p>
                         <p data-flood-ai class="mt-1 font-extrabold text-slate-950">-</p>
                     </div>
                 </div>

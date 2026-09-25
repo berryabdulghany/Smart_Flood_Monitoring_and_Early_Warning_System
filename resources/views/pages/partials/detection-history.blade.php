@@ -1,15 +1,15 @@
 <section class="dashboard-card overflow-hidden">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
         <div>
-            <h2 class="text-lg font-bold text-slate-950">Flood Event History</h2>
+            <h2 class="text-lg font-bold text-slate-950" data-i18n="nav.history">Flood Event History</h2>
             <p class="text-sm font-medium text-slate-500">
-                Event banjir terbaru (level air + curah hujan + AI) &middot;
+                <span data-i18n="dash.subtitle">Event banjir terbaru (level air + curah hujan + AI)</span> &middot;
                 <span id="dash-history-count" class="font-bold text-cyan-700">Memuat...</span>
             </p>
         </div>
         <a href="{{ route('history') }}"
            class="inline-flex items-center gap-2 rounded-xl border border-cyan-100 bg-cyan-50 px-3 py-2 text-sm font-bold text-cyan-700 transition hover:bg-cyan-100">
-            Lihat Semua
+            <span data-i18n="common.view-all">Lihat Semua</span>
             <i data-lucide="arrow-right" class="h-4 w-4"></i>
         </a>
     </div>
@@ -17,9 +17,9 @@
         <table class="min-w-full divide-y divide-slate-200">
             <thead class="table-head">
                 <tr>
-                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Waktu</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Lokasi</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide">Status</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide" data-i18n="common.time">Waktu</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide" data-i18n="common.location">Lokasi</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide" data-i18n="common.status">Status</th>
                 </tr>
             </thead>
             <tbody id="dash-history-tbody" class="divide-y divide-slate-100 bg-white">
@@ -34,7 +34,7 @@
 
     <script>
         (function () {
-            const endpoint = 'http://' + window.location.hostname + ':8000/flood/history?limit=6';
+            const endpoint = (window.SFMEWS_ENDPOINT?.api || ('http://' + window.location.hostname + ':8000')) + '/flood/history?limit=6';
             const tbody = document.getElementById('dash-history-tbody');
             const stateRow = document.getElementById('dash-history-state');
             const stateMsg = document.getElementById('dash-history-state-msg');

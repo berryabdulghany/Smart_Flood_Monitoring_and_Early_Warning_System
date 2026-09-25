@@ -9,6 +9,15 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    {{-- Alamat layanan untuk pemanggilan dari browser. Kosong = pakai host
+         halaman ini (perilaku produksi). Diisi saat development lokal agar
+         halaman menampilkan data ASLI, bukan nilai contoh dari controller. --}}
+    <script>
+        window.SFMEWS_ENDPOINT = {
+            api: @json(config('sfmews.api_public_url')),
+            ai: @json(config('sfmews.ai_public_url')),
+        };
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-[#F5F7FA] text-slate-800 antialiased">

@@ -229,6 +229,62 @@
         background: white;
     }
 
+    /* Tooltip hover marker peta */
+    .flood-tooltip.leaflet-tooltip {
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 0.7rem;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18);
+        backdrop-filter: blur(10px);
+        padding: 0.55rem 0.7rem;
+        white-space: nowrap;
+    }
+
+    .flood-tooltip.leaflet-tooltip-top::before {
+        border-top-color: rgba(255, 255, 255, 0.96);
+    }
+
+    .flood-tip-name {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: rgb(15, 23, 42);
+        line-height: 1.1;
+    }
+
+    .flood-tip-sub {
+        margin-top: 0.05rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: rgb(100, 116, 139);
+    }
+
+    .flood-tip-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
+
+    .flood-tip-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 999px;
+        box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+    }
+
+    .flood-tip-water {
+        color: rgb(51, 65, 85);
+    }
+
+    .flood-tip-hint {
+        margin-top: 0.3rem;
+        font-size: 0.64rem;
+        font-weight: 600;
+        color: rgb(148, 163, 184);
+    }
+
     .leaflet-popup-content-wrapper,
     .leaflet-popup-tip {
         border: 1px solid rgba(226, 232, 240, 0.9);
@@ -285,9 +341,19 @@
         animation: scanline 2.4s linear infinite;
     }
 
+    /* Penanda "AI menganalisis" — badge tenang, bukan garis menyapu.
+       Pakai selektor ID supaya menang atas utility & toggle .hidden tetap jalan. */
     #smart-popup-ai-scan {
-        animation: smart-popup-scan 1.45s ease-in-out infinite;
-        box-shadow: 0 0 28px rgba(34, 211, 238, 0.85);
+        display: inline-flex;
+    }
+
+    #smart-popup-ai-scan.hidden {
+        display: none;
+    }
+
+    /* Pesan overlay video: bisa memudar halus saat disembunyikan */
+    #smart-popup-video-message {
+        transition: opacity .35s ease;
     }
 
     /* ===== RESPONSIVE MOBILE UTILITIES ===== */

@@ -11,28 +11,28 @@
                     <div class="status-card">
                         <span class="status-icon bg-cyan-50 text-cyan-600"><i data-lucide="map-pin" class="h-5 w-5"></i></span>
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Monitoring points</p>
+                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500" data-i18n="map.points">Monitoring points</p>
                             <p class="text-2xl font-bold text-slate-950">3</p>
                         </div>
                     </div>
                     <div class="status-card">
                         <span class="status-icon bg-emerald-50 text-emerald-600"><i data-lucide="shield-check" class="h-5 w-5"></i></span>
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Area aman</p>
+                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500" data-i18n="map.safe-area">Area aman</p>
                             <p class="text-2xl font-bold text-slate-950" data-flood-count-safe>1</p>
                         </div>
                     </div>
                     <div class="status-card">
                         <span class="status-icon bg-amber-50 text-amber-600"><i data-lucide="triangle-alert" class="h-5 w-5"></i></span>
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Waspada</p>
+                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500" data-i18n="flood.warning">Waspada</p>
                             <p class="text-2xl font-bold text-slate-950" data-flood-count-warning>1</p>
                         </div>
                     </div>
                     <div class="status-card">
                         <span class="status-icon bg-red-50 text-red-600"><i data-lucide="siren" class="h-5 w-5"></i></span>
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Banjir aktif</p>
+                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500" data-i18n="map.active-flood">Banjir aktif</p>
                             <p class="text-2xl font-bold text-slate-950" data-flood-count-danger>1</p>
                         </div>
                     </div>
@@ -41,13 +41,13 @@
                 <section class="dashboard-card overflow-hidden">
                     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-950">Flood Map GIS Kota Bandung</h2>
+                            <h2 class="text-lg font-bold text-slate-950" data-i18n="map.title-bdg">Flood Map GIS Kota Bandung</h2>
                             <p class="text-sm font-medium text-slate-500">Leaflet GIS monitoring: Kopo, Pasir Koja, Gede Bage</p>
                         </div>
                         <div class="flex flex-wrap gap-2 text-xs font-bold">
-                            <span class="legend-dot text-emerald-500">Aman</span>
-                            <span class="legend-dot text-amber-500">Waspada</span>
-                            <span class="legend-dot text-red-500">Banjir</span>
+                            <span class="legend-dot text-emerald-500" data-i18n="flood.safe">Aman</span>
+                            <span class="legend-dot text-amber-500" data-i18n="flood.warning">Waspada</span>
+                            <span class="legend-dot text-red-500" data-i18n="flood.danger">Banjir</span>
                         </div>
                     </div>
                     <div class="relative h-[320px] min-h-[280px] sm:h-[480px] lg:h-[560px] xl:h-[640px] map-container-responsive">
@@ -58,13 +58,21 @@
                     </div>
                 </section>
 
-                @include('pages.partials.ai-cctv-detection')
+                {{-- Widget simulasi deteksi AI = alat demo/pengujian, bukan
+                     informasi untuk masyarakat. Hanya tampil bagi Admin. --}}
+                @if (session('admin_user'))
+                    @include('pages.partials.ai-cctv-detection')
+                @endif
+
             </section>
 
             <x-dashboard.right-panel :alerts="$alerts" :locations="$locations" />
 
-            {{-- Detection History — kolom kiri bawah di desktop, paling bawah di mobile --}}
-            <div class="min-w-0">
+            {{-- Riwayat: desktop = kolom KIRI baris kedua, mobile = paling bawah.
+                 Panel kanan diberi `xl:row-span-2` agar tidak memaksa baris
+                 pertama menjadi tinggi — itulah penyebab ruang kosong menganga
+                 antara peta dan tabel ini. --}}
+            <div class="min-w-0 xl:col-start-1 xl:row-start-2">
                 @include('pages.partials.detection-history')
             </div>
         </main>
@@ -74,8 +82,8 @@
         <script>
             window.SFMEWS = {!! Illuminate\Support\Js::from([
                 'locations' => $locations,
-                'sensorEndpoint' => 'http://' . request()->getHost() . ':8000/sensor/latest',
-                'aiEndpoint' => 'http://' . request()->getHost() . ':5000/detect',
+                'sensorEndpoint' => (config('sfmews.api_public_url') ?: 'http://' . request()->getHost() . ':8000') . '/sensor/latest',
+                'aiEndpoint' => (config('sfmews.ai_public_url') ?: 'http://' . request()->getHost() . ':5000') . '/detect',
                 'weatherEndpoint' => route('api.weather.realtime'),
             ]) !!};
         </script>

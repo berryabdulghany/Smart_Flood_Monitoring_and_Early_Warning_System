@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -46,88 +47,89 @@ class DashboardController extends Controller
         ]));
     }
 
-    private function dashboardData(array $page = []): array
+    /**
+     * Nilai bawaan bila API tidak dapat dihubungi, agar halaman tetap tampil.
+     * Dipakai juga sebagai kerangka field runtime (status, level air, dst).
+     */
+    private const LOKASI_CADANGAN = [
+        [
+            'id' => 'kopo', 'name' => 'KOPO - RS Bandung Kiwari 02', 'short_name' => 'Kopo',
+            'district' => 'RS Bandung Kiwari 02', 'lat' => -6.943258140459321, 'lng' => 107.59159188077126,
+            'cctv' => 'BDG-KPO-01',
+            'cctv_live_url' => 'https://pelindung.bandung.go.id:3443/video/DPU/kopocitarip.m3u8',
+            'cctv_fallback_url' => '/videos/kopo-flood-transition.mp4',
+        ],
+        [
+            'id' => 'pasir-koja', 'name' => 'SP Pasir Koja', 'short_name' => 'Pasir Koja',
+            'district' => 'Bojongloa Kaler', 'lat' => -6.930461, 'lng' => 107.575984,
+            'cctv' => 'BDG-PSK-03',
+            'cctv_live_url' => 'https://pelindung.bandung.go.id:3443/video/DISHUB/sppasirkoja.m3u8',
+            'cctv_fallback_url' => '/videos/pasirkoja-flood-transition.mp4',
+        ],
+        [
+            'id' => 'gede-bage', 'name' => 'Gedebage Selatan - Jl. Derwati', 'short_name' => 'Gede Bage',
+            'district' => 'Jl. Derwati', 'lat' => -6.965528, 'lng' => 107.686923,
+            'cctv' => 'BDG-GDB-02',
+            'cctv_live_url' => 'https://pelindung.bandung.go.id:3443/video/DPU/gdbageselatan.m3u8',
+            'cctv_fallback_url' => '/videos/gedebage-flood-transition.mp4',
+        ],
+    ];
+
+    /**
+     * Konfigurasi titik monitoring dari MongoDB (via FastAPI) — dapat dikelola
+     * Admin. Nilai runtime (status, level air, cuaca) sengaja dibiarkan netral
+     * karena akan diisi realtime oleh JavaScript dari /flood/status; memakai
+     * angka contoh di sini pernah membuat halaman menampilkan data palsu saat
+     * API belum sempat terbaca.
+     */
+    private function konfigurasiLokasi(): array
     {
-        $locations = [
-            [
-                'id' => 'kopo',
-                'name' => 'KOPO - RS Bandung Kiwari 02',
-                'short_name' => 'Kopo',
-                'district' => 'RS Bandung Kiwari 02',
-                'lat' => -6.943258140459321,
-                'lng' => 107.59159188077126,
-                'status' => 'warning',
-                'status_label' => 'Waspada',
-                'status_color' => '#f59e0b',
-                'cctv' => 'BDG-KPO-01',
-                'cctv_live_url' => 'https://pelindung.bandung.go.id:3443/video/DPU/kopocitarip.m3u8',
-                'cctv_fallback_url' => '/videos/kopo-flood-transition.mp4',
-                'online' => true,
-                'ai_confidence' => 62,
-                'water_level' => 10,
-                'rainfall' => 2.1,
-                'temperature' => 25.7,
-                'humidity' => 86,
-                'weather' => 'Hujan sedang',
-                'rain_potential' => '78%',
-                'flood_prediction' => 'Waspada 90 menit',
-                'last_detection' => '01:12 WIB',
-                'wind_speed' => 9,
-                'battery' => 91,
-            ],
-            [
-                'id' => 'pasir-koja',
-                'name' => 'SP Pasir Koja',
-                'short_name' => 'Pasir Koja',
-                'district' => 'Bojongloa Kaler',
-                'lat' => -6.930461,
-                'lng' => 107.575984,
-                'status' => 'danger',
-                'status_label' => 'Banjir',
-                'status_color' => '#ef4444',
-                'cctv' => 'BDG-PSK-03',
-                'cctv_live_url' => 'https://pelindung.bandung.go.id:3443/video/DISHUB/sppasirkoja.m3u8',
-                'cctv_fallback_url' => '/videos/pasirkoja-flood-transition.mp4',
-                'online' => true,
-                'ai_confidence' => 86,
-                'water_level' => 18,
-                'rainfall' => 4.3,
-                'temperature' => 25.1,
-                'humidity' => 91,
-                'weather' => 'Hujan lebat',
-                'rain_potential' => '92%',
-                'flood_prediction' => 'Tinggi 45 menit',
-                'last_detection' => '01:14 WIB',
-                'wind_speed' => 14,
-                'battery' => 86,
-            ],
-            [
-                'id' => 'gede-bage',
-                'name' => 'Gedebage Selatan - Jl. Derwati',
-                'short_name' => 'Gede Bage',
-                'district' => 'Jl. Derwati',
-                'lat' => -6.965528,
-                'lng' => 107.686923,
+        $dariApi = [];
+
+        try {
+            $res = Http::timeout(5)->get(rtrim(config('sfmews.api_url'), '/') . '/locations');
+            if ($res->successful()) {
+                $dariApi = collect($res->json('data') ?? [])->keyBy('id')->all();
+            }
+        } catch (\Throwable $e) {
+            // biarkan kosong -> pakai nilai cadangan
+        }
+
+        return collect(self::LOKASI_CADANGAN)->map(function (array $bawaan) use ($dariApi) {
+            $api = $dariApi[$bawaan['id']] ?? [];
+
+            return array_merge($bawaan, [
+                'name' => $api['nama'] ?? $bawaan['name'],
+                'short_name' => $api['nama_pendek'] ?? $bawaan['short_name'],
+                'district' => $api['kecamatan'] ?? $bawaan['district'],
+                'lat' => $api['lat'] ?? $bawaan['lat'],
+                'lng' => $api['lng'] ?? $bawaan['lng'],
+                'cctv' => $api['kode_cctv'] ?? $bawaan['cctv'],
+                'cctv_live_url' => $api['cctv_live_url'] ?? $bawaan['cctv_live_url'],
+                'cctv_fallback_url' => $api['cctv_fallback_url'] ?? $bawaan['cctv_fallback_url'],
+                // ---- nilai runtime (netral, diisi realtime oleh JavaScript) ----
                 'status' => 'safe',
                 'status_label' => 'Aman',
                 'status_color' => '#22c55e',
-                'cctv' => 'BDG-GDB-02',
-                'cctv_live_url' => 'https://pelindung.bandung.go.id:3443/video/HIKSVISION/rancanumpangg.m3u8',
-                'cctv_fallback_url' => '/videos/gedebage-flood-transition.mp4',
                 'online' => true,
-                'ai_confidence' => 31,
-                'water_level' => 3,
+                'ai_confidence' => 0,
+                'water_level' => 0,
                 'rainfall' => 0,
-                'temperature' => 26.4,
-                'humidity' => 79,
-                'weather' => 'Berawan',
-                'rain_potential' => '36%',
-                'flood_prediction' => 'Rendah 2 jam',
-                'last_detection' => '01:09 WIB',
-                'wind_speed' => 7,
-                'battery' => 96,
-            ],
-        ];
+                'temperature' => 0,
+                'humidity' => 0,
+                'weather' => '-',
+                'rain_potential' => '-',
+                'flood_prediction' => '-',
+                'last_detection' => '-',
+                'wind_speed' => 0,
+                'battery' => 100,
+            ]);
+        })->values()->all();
+    }
+
+    private function dashboardData(array $page = []): array
+    {
+        $locations = $this->konfigurasiLokasi();
 
         return array_merge([
             'locations' => $locations,

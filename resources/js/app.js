@@ -1,4 +1,6 @@
 import './bootstrap';
+import './i18n';
+import './system-status';
 import './modules/dashboard';
 import './dashboard';
 import './ai-cctv';

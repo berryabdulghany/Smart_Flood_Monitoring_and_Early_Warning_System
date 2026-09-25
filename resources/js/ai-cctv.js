@@ -278,6 +278,10 @@ const sendFrameForDetection = async () => {
         formData.append('file', blob, 'cctv-frame.jpg');
         formData.append('location', location.name);
         formData.append('location_id', location.id);
+        // Widget ini SIMULASI demo skripsi -> YOLO tetap jalan (hasil tampil di
+        // widget), tapi AI engine TIDAK menyimpan ke DB, jadi tidak memengaruhi
+        // Flood Decision System. Deteksi CCTV LIVE (popup GIS) tidak pakai flag ini.
+        formData.append('simulasi', '1');
 
         const response = await fetch(endpoint(), {
             method: 'POST',

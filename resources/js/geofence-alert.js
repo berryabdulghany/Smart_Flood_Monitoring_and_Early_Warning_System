@@ -86,9 +86,15 @@ function buildUi() {
     btn.type = 'button';
     btn.id = 'gf-toggle';
     btn.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:1200;display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border:none;border-radius:9999px;background:#0891b2;color:#fff;font:600 13px/1 Instrument Sans,sans-serif;box-shadow:0 10px 30px rgba(8,145,178,.35);cursor:pointer;';
-    btn.innerHTML = '<span style="font-size:16px">🔔</span> Aktifkan Peringatan Lokasi';
+    const labelBtn = () => (window.SFMEWS_t ? window.SFMEWS_t('btn.alert') : 'Aktifkan Peringatan Lokasi');
+    btn.innerHTML = '<span style="font-size:16px">🔔</span> <span data-gf-label>' + labelBtn() + '</span>';
     btn.addEventListener('click', enable);
     document.body.appendChild(btn);
+    // ikut ganti bahasa
+    window.addEventListener('sfmews:lang-changed', () => {
+        const l = btn.querySelector('[data-gf-label]');
+        if (l) l.textContent = labelBtn();
+    });
 
     // Tombol uji (muncul setelah aktif)
     const test = document.createElement('button');

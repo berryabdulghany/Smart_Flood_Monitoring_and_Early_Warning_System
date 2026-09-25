@@ -1,9 +1,9 @@
 <section class="dashboard-card overflow-hidden">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
         <div>
-            <p class="text-xs font-bold uppercase tracking-wide text-cyan-600">YOLO AI Engine</p>
-            <h2 class="text-lg font-bold text-slate-950">AI CCTV Flood Detection</h2>
-            <p class="text-sm font-medium text-slate-500">Video simulation for thesis demonstration and future realtime CCTV stream integration.</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-cyan-600" data-i18n="ai.engine">YOLO AI Engine</p>
+            <h2 class="text-lg font-bold text-slate-950" data-i18n="ai.title">AI CCTV Flood Detection</h2>
+            <p class="text-sm font-medium text-slate-500" data-i18n="ai.subtitle">Video simulation for thesis demonstration and future realtime CCTV stream integration.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
             <span id="ai-engine-status-pill" class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
@@ -12,7 +12,7 @@
             </span>
             <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-bold text-slate-500 ring-1 ring-slate-200">
                 <i data-lucide="clock-3" class="h-4 w-4 text-cyan-600"></i>
-                <span>Detection Time: <span id="ai-detection-timestamp">Waiting...</span></span>
+                <span><span data-i18n="ai.detection-time">Detection Time:</span> <span id="ai-detection-timestamp">Waiting...</span></span>
             </span>
         </div>
     </div>
@@ -25,6 +25,15 @@
                         <span class="h-2.5 w-2.5 rounded-full bg-red-500"></span>
                         <span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
                         <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                    </div>
+                    {{-- Toggle sumber video: rekaman (playback) vs siaran langsung (live) --}}
+                    <div id="ai-mode-toggle" class="inline-flex shrink-0 items-center rounded-lg border border-white/10 bg-white/10 p-0.5">
+                        <button type="button" id="ai-mode-playback"
+                                class="rounded-md px-3 py-1.5 text-xs font-bold text-white transition"
+                                aria-pressed="true" data-i18n="ai.playback">Playback</button>
+                        <button type="button" id="ai-mode-live"
+                                class="rounded-md px-3 py-1.5 text-xs font-bold text-white/60 transition hover:text-white"
+                                aria-pressed="false" data-i18n="ai.live">Live</button>
                     </div>
                     <select id="ai-monitoring-location" class="h-9 rounded-lg border border-white/10 bg-white/10 px-3 text-xs font-bold text-white outline-none transition hover:bg-white/15">
                         <option value="Kopo" data-location-id="kopo">Kopo</option>
@@ -59,11 +68,11 @@
             <div class="flex flex-wrap gap-3">
                 <button id="ai-start-detection" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-100 transition hover:bg-cyan-700">
                     <i data-lucide="play" class="h-4 w-4"></i>
-                    Start Detection
+                    <span data-i18n="ai.start">Start Detection</span>
                 </button>
                 <button id="ai-stop-detection" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm transition hover:border-red-100 hover:bg-red-50 hover:text-red-600" disabled>
                     <i data-lucide="square" class="h-4 w-4"></i>
-                    Stop Detection
+                    <span data-i18n="ai.stop">Stop Detection</span>
                 </button>
             </div>
         </div>
@@ -83,11 +92,11 @@
 
             <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
                 <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Detection Status</p>
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500" data-i18n="ai.detection-status">Detection Status</p>
                     <p id="ai-detection-status" class="mt-2 text-2xl font-extrabold text-slate-950">Waiting</p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Confidence</p>
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500" data-i18n="ai.confidence">Confidence</p>
                     <p class="mt-2 text-2xl font-extrabold text-slate-950"><span id="ai-confidence-value">0</span><span class="text-lg text-slate-400">%</span></p>
                     <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
                         <div id="ai-confidence-bar" class="h-full w-0 rounded-full bg-cyan-500 transition-all duration-500"></div>
@@ -97,11 +106,11 @@
 
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-bold uppercase tracking-wide text-slate-900">Detection History</h3>
-                    <span class="text-xs font-bold text-slate-400">Latest 6</span>
+                    <h3 class="text-sm font-bold uppercase tracking-wide text-slate-900" data-i18n="detection.title">Detection History</h3>
+                    <span class="text-xs font-bold text-slate-400" data-i18n="detection.latest">Latest 6</span>
                 </div>
                 <div id="ai-detection-history" class="mt-3 space-y-2">
-                    <div class="rounded-xl bg-slate-50 px-3 py-2 text-sm font-medium text-slate-500">No detection yet.</div>
+                    <div class="rounded-xl bg-slate-50 px-3 py-2 text-sm font-medium text-slate-500" data-i18n="detection.empty">No detection yet.</div>
                 </div>
             </div>
 
