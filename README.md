@@ -18,13 +18,27 @@ menjadi satu keputusan status yang dapat dipertanggungjawabkan.
 
 ## 📸 Tampilan
 
-<!-- Ganti dengan tangkapan layar sendiri:
-     ![Dasbor](docs/dasbor.png)
-     ![Peta Web GIS](docs/peta.png)
-     ![Riwayat Kejadian](docs/riwayat.png)
--->
+**Dasbor utama** — ringkasan status ketiga titik, peta, panel keputusan, dan riwayat
+terbaru dalam satu layar.
 
-*Tangkapan layar menyusul.*
+![Dasbor](docs/dasbor.png)
+
+**Popup pemantauan titik** — siaran CCTV langsung, hasil deteksi visual, dan alasan
+keputusan ditampilkan berdampingan. Terlihat kalimat alasan lengkap beserta penanda bahwa
+data hujan belum sah untuk dipakai sebagai pemicu.
+
+![Popup pemantauan](docs/popup.png)
+
+<table>
+<tr>
+<td width="50%"><b>Peta Web GIS</b><br><sub>Penanda berwarna menurut status tiap titik</sub><br><br><img src="docs/peta.png" alt="Peta Web GIS"></td>
+<td width="50%"><b>Pemantauan CCTV</b><br><sub>Siaran ATCS dengan pemeriksaan YOLOv8</sub><br><br><img src="docs/cctv.png" alt="Pemantauan CCTV"></td>
+</tr>
+<tr>
+<td width="50%"><b>Pemantauan IoT</b><br><sub>Bacaan sensor per titik. Pada tangkapan ini node lapangan tidak terhubung, sehingga kartu menampilkan keadaan menunggu data</sub><br><br><img src="docs/iot.png" alt="Pemantauan IoT"></td>
+<td width="50%"><b>Riwayat Kejadian Banjir</b><br><sub>Hanya perubahan status yang dicatat, bukan setiap kali status dihitung</sub><br><br><img src="docs/riwayat.png" alt="Riwayat kejadian"></td>
+</tr>
+</table>
 
 ---
 
