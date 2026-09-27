@@ -173,45 +173,6 @@ Rincian perintah, pemecahan masalah, dan konfigurasi perangkat IoT ada di
 
 ---
 
-## 📊 Hasil pengujian
-
-**Pengujian fungsional** — 41 kasus, **37 sesuai harapan (90,2 %)**. Tidak satu pun temuan
-menyangkut kesalahan aturan keputusan; seluruhnya berupa penanganan galat dan ketersediaan
-sumber eksternal.
-
-**Model deteksi visual** — YOLOv8n, puncak kurva F1 **0,7766 pada ambang 0,4034**.
-
-**Perilaku model pada operasi nyata** — 2.317 pemeriksaan selama 43,7 jam:
-
-| Lokasi | Pemeriksaan | Deteksi keliru | Laju |
-|---|---|---|---|
-| Kopo | 931 | 1 | 0,11 % |
-| Pasir Koja | 455 | 18 | 3,96 % |
-| Gedebage | 931 | 51 | 5,48 % |
-| **Total** | **2.317** | **70** | **3,02 %** |
-
-Selisih Kopo dan Gedebage mencapai 50 kali lipat padahal model, ambang, dan waktu
-pengamatannya sama persis. Penyebabnya **kebasahan dan pantulan permukaan jalan**, bukan
-kegelapan.
-
-**Yang penting:** ketujuh puluh deteksi keliru itu **tidak satu pun menghasilkan status
-Banjir**, karena bukti visual hanya berwenang menaikkan satu tingkat dari status sensor.
-Inilah pembenaran empiris rancangan hierarki keputusannya.
-
----
-
-## ⚠️ Keterbatasan yang diakui
-
-1. Model masih keliru **3,02 %** pada kondisi jalan basah malam hari
-2. **Kamera tunggal tidak dapat mengukur kedalaman** — hanya mengenali pola permukaan
-3. Pembatasan "naik satu tingkat" **tidak kebal**: bila deteksi keliru terjadi saat air
-   berada pada 10–29 cm, sistem akan menyatakan Banjir. Belum pernah terjadi pada pengujian,
-   dan justru memperkuat perlunya konfirmasi temporal
-4. Ketersediaan siaran CCTV **di luar kendali sistem**
-5. Peringatan berbasis lokasi menuntut konteks aman (HTTPS atau `localhost`)
-
----
-
 ## 📁 Struktur
 
 ```
